@@ -741,6 +741,8 @@ function saveDatabase() {
     })
     .catch(err => {
       console.error("Firebase sync error: ", err);
+      // 저장 실패 원인(권한 거부 등)을 상세히 얼럿창으로 피드백 유도
+      alert(`[클라우드 동기화 실패]\n구글 데이터베이스 전송 도중 에러가 발생했습니다:\n${err.message}\n\n(주로 Firebase 규칙 설정 문제인 경우가 많습니다.)`);
       setTimeout(() => { state.isLocalWriting = false; }, 800);
     });
 }
