@@ -536,6 +536,15 @@ function startCloudSync(churchId) {
 
 // 데이터 로드 및 Firebase 실시간 연동/마이그레이션
 async function initDatabase() {
+  // [초기화 마스터키] 쿼리 스트링에 ?reset=true 가 들어오면 강제 오프라인 공장초기화 기동
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('reset') === 'true') {
+    localStorage.removeItem('worship_liturgy_db');
+    alert("로컬 캐시 데이터베이스 초기화가 완료되었습니다.");
+    window.location.href = window.location.origin + window.location.pathname;
+    return;
+  }
+
   const localData = localStorage.getItem('worship_liturgy_db');
   if (localData) {
     try {
@@ -555,9 +564,15 @@ async function initDatabase() {
   try {
     const snapshot = await fbDB.ref('churches').once('value');
     const cloudChurches = snapshot.val();
-    if (cloudChurches) {
-      db.churches = cloudChurches;
-      console.log("Firebase cloud database synced successfully.");
+    // 클라우드 데이터 무결성 검증 (깨진 데이터 오버라이트 방지)
+    if (cloudChurches && typeof cloudChurches === 'object' && Object.keys(cloudChurches).length > 0) {
+      if (cloudChurches['church-1'] && cloudChurches['church-1'].worships) {
+        db.churches = cloudChurches;
+        console.log("Firebase cloud database synced successfully.");
+      } else {
+        console.warn("Firebase data is corrupted. Re-publishing local clean database to cloud...");
+        await fbDB.ref('churches').set(db.churches);
+      }
     } else {
       console.log("Firebase is empty. Migrating local database to Firebase cloud...");
       await fbDB.ref('churches').set(db.churches);
