@@ -1,0 +1,1389 @@
+/* CSS 변수 설정 */
+:root {
+  --primary: #1E40AF; /* TIKITAKA BAND 이미지 톤에 맞춰 조금 더 딥한 블루로 수정 */
+  --primary-hover: #1D4ED8;
+  --primary-light: #EFF6FF;
+  --primary-dark: #1E3A8A;
+  
+  --bg-app: #E0E7FF; /* 데스크톱 브라우저 바깥 배경 (수채화 톤 연계) */
+  --bg-phone: #FFFFFF; /* 모바일 폰 스크린 배경 */
+  
+  --text-main: #1F2937;
+  --text-sub: #4B5563;
+  --text-muted: #9CA3AF;
+  
+  --border: rgba(229, 231, 235, 0.5); /* 반투명한 부드러운 보더 */
+  --danger: #EF4444;
+  --danger-hover: #DC2626;
+  --success: #10B981;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+  
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+/* 기본 리셋 및 폰트 설정 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter', 'Noto Sans KR', sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 전체 컨테이너 */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  padding: 16px;
+}
+
+/* 모바일 기기 목업 프레임 */
+.phone-frame {
+  width: 100%;
+  height: 840px;
+  max-height: calc(100vh - 40px);
+  background-color: #111827; /* 어두운 차콜 기기 베젤 */
+  border-radius: 40px;
+  padding: 12px;
+  box-shadow: var(--shadow-xl);
+  border: 4px solid #1F2937;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 스크린 영역 - 전체 앱 화면의 수채화 백그라운드 템플릿 일괄 적용 */
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background-image: url('app-bg.png');
+  background-size: cover;
+  background-position: center;
+  border-radius: 30px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 화면 공통 */
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: transparent; /* 뒷배경 수채화가 비치도록 투명화 */
+  opacity: 0;
+  transform: translateX(100%);
+  pointer-events: none;
+  transition: transform var(--transition-normal), opacity var(--transition-normal);
+}
+
+.screen.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.screen.slide-left {
+  transform: translateX(-100%);
+}
+
+.screen-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 스크롤바 숨기기 */
+.screen-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==========================================================================
+   [1] 로그인 / 가입 화면 스타일 (Auth Screen - TIKITAKA BAND 로고 포함)
+   ========================================================================== */
+#screen-auth {
+  background-image: url('auth-bg.png');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.auth-header {
+  height: 290px;
+  border-bottom: none;
+  background: none;
+  padding: 0;
+}
+
+.auth-header * {
+  display: none !important;
+}
+
+.auth-content {
+  padding: 0 20px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+/* 탭 스타일 Glassmorphism 적용 */
+.auth-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  margin-bottom: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-fast);
+  border-bottom: none;
+  border-radius: var(--radius-sm);
+}
+
+.auth-tab.active {
+  background-color: #FFFFFF;
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 폼 입력 영역 Glassmorphism 적용 */
+.auth-area {
+  display: none;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-area.active {
+  display: block;
+}
+
+/* 검색 그룹 스타일 */
+.search-group {
+  position: relative;
+  padding: 0 !important;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.search-input-wrapper input {
+  padding-left: 38px !important;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: var(--radius-sm);
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: var(--shadow-lg);
+  margin-top: 6px;
+  display: none;
+}
+
+.search-results.active {
+  display: block;
+}
+
+.search-result-item {
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #FAFAFA;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* 로그인 폼 영역 */
+.login-form-box {
+  margin-top: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  display: none;
+  animation: fadeIn var(--transition-normal) forwards;
+}
+
+.login-form-box.active {
+  display: block;
+}
+
+.selected-church-indicator {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 10px 0;
+}
+
+.admin-login-divider::before,
+.admin-login-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-login-divider span {
+  padding: 0 10px;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn-large-auth {
+  padding: 14px !important;
+  font-size: 0.9375rem !important;
+  justify-content: center;
+}
+
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+.p-0 { padding: 0 !important; }
+
+/* ==========================================================================
+   [2] 메인 및 기타 화면 헤더 스타일 (Glassmorphism 투명 헤더 적용)
+   ========================================================================== */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 20px 16px 20px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.4);
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background-color: rgba(30, 64, 175, 0.08);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+.title-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.edit-team-name-btn {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  padding: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.edit-team-name-btn:hover {
+  color: var(--primary);
+  background-color: var(--primary-light);
+}
+
+body.admin-mode .edit-team-name-btn {
+  display: inline-flex;
+}
+
+.subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1px;
+}
+
+.app-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
+
+/* 역할 표시 뱃지 */
+.role-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+body.admin-mode .role-badge,
+#badge-role-main:not(.member),
+#badge-role-sub:not(.member),
+#badge-role-history:not(.member),
+#badge-role-detail:not(.member) {
+  background-color: rgba(30, 64, 175, 0.1);
+  color: var(--primary);
+}
+
+body:not(.admin-mode) .role-badge {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #4B5563;
+}
+
+.logout-btn {
+  color: var(--text-sub);
+  font-size: 1.05rem;
+}
+
+.logout-btn:hover {
+  color: var(--danger);
+  background-color: rgba(239, 68, 68, 0.08);
+}
+
+/* 헤더 내 센터 타이틀 정렬 */
+.header-center-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  text-align: center;
+  padding: 0 8px;
+  overflow: hidden;
+}
+
+.header-center-title .role-badge {
+  margin-top: 3px;
+}
+
+/* ==========================================================================
+   [3] 메인 카드 및 서브 카드 리스트 (반투명 Glassmorphism 카드 적용)
+   ========================================================================== */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.liturgy-card,
+.week-card,
+.notice-card,
+.rec-song-card {
+  display: flex;
+  align-items: center;
+  padding: 18px 16px;
+  background-color: rgba(255, 255, 255, 0.85); /* 뒷배경이 은은하게 비치도록 투명화 */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(229, 231, 235, 0.7);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.rec-song-card {
+  cursor: default;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.liturgy-card:hover,
+.week-card:hover,
+.notice-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+.liturgy-card:active,
+.week-card:active,
+.notice-card:active {
+  transform: translateY(0);
+}
+
+.card-icon,
+.notice-icon-wrapper,
+.rec-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+/* 카드 아이콘 색상 커스텀 */
+.card-icon.main-week { background-color: rgba(0, 0, 0, 0.05); color: #4B5563; }
+.card-icon.next-week { background-color: rgba(59, 130, 246, 0.1); color: var(--primary); }
+.card-icon.service-2 { background-color: rgba(217, 119, 6, 0.1); color: #D97706; }
+.card-icon.service-3 { background-color: rgba(5, 150, 105, 0.1); color: #059669; }
+.card-icon.service-4 { background-color: rgba(219, 39, 119, 0.1); color: #DB2777; }
+.card-icon.service-custom { background-color: rgba(30, 64, 175, 0.08); color: var(--primary); }
+.notice-icon-wrapper { background-color: rgba(217, 119, 6, 0.08); color: #D97706; }
+.rec-icon-wrapper { background-color: rgba(16, 185, 129, 0.08); color: #10B981; }
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.card-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 예배 날짜 뱃지 스타일 */
+.worship-date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(30, 64, 175, 0.06);
+  color: var(--primary);
+  border: 1px solid rgba(30, 64, 175, 0.12);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+/* 역사 목록 찬양 개수 뱃지 스타일 */
+.history-song-count-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: rgba(30, 64, 175, 0.06);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.card-desc {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-arrow {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin-left: 4px;
+}
+
+/* 메인 화면 하단 마진 및 예배 관리 컨트롤 */
+.main-content {
+  padding-bottom: 84px; /* 탭바 영역 확보 */
+}
+
+body.admin-mode .main-content {
+  padding-bottom: 150px; /* 탭바 + 플로팅바 영역 확보 */
+}
+
+.worship-admin-controls,
+.notice-admin-controls {
+  display: none;
+  gap: 4px;
+  margin-left: 8px;
+  margin-right: 4px;
+}
+
+body.admin-mode .worship-admin-controls,
+body.admin-mode .notice-admin-controls {
+  display: flex;
+}
+
+/* ==========================================================================
+   [2.5] 메인 하단 고정 탭바 내비게이션 (Bottom Navigation Tab Bar)
+   ========================================================================== */
+.bottom-tab-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  border-top: 1px solid rgba(229, 231, 235, 0.5);
+  z-index: 10;
+  border-radius: 0 0 30px 30px;
+  overflow: hidden;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.tab-item:hover {
+  color: var(--text-sub);
+}
+
+.tab-item.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.tab-item i {
+  font-size: 1.15rem;
+}
+
+.tab-item span {
+  font-size: 0.6875rem;
+}
+
+/* 탭 전환 영역 분할 스타일 */
+.tab-area {
+  display: none;
+  animation: fadeIn var(--transition-fast) forwards;
+}
+
+.tab-area.active {
+  display: block;
+}
+
+/* 메인 화면 플로팅 액션바 위치 보정 (탭바 윗쪽에 부양시키기) */
+#admin-main-actions {
+  bottom: 64px !important;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.9) 30%);
+}
+
+/* ==========================================================================
+   [2.8] AI 추천 상세 스타일링 (로딩 스피너 및 추천 카드)
+   ========================================================================== */
+.ai-spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid rgba(30, 64, 175, 0.1);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.rec-reason-box {
+  background-color: rgba(30, 64, 175, 0.05);
+  border-left: 3px solid var(--primary);
+  padding: 10px 12px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  line-height: 1.5;
+  margin-top: 8px;
+  white-space: pre-wrap;
+}
+
+.btn-add-to-conti {
+  flex: 1.5;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid rgba(30, 64, 175, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.btn-add-to-conti:hover {
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+}
+
+.rec-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.rec-youtube-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.rec-youtube-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #B91C1C;
+}
+
+/* ==========================================================================
+   [4] 서브 및 콘티 상세 화면 헤더 (Glassmorphism 투명 헤더 적용)
+   ========================================================================== */
+.sub-header,
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.4);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.sub-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 찬양 목록 */
+.song-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 100px;
+}
+
+/* 찬양 카드 (반투명 Glassmorphism 카드 적용) */
+.song-item {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(229, 231, 235, 0.7);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.song-item.dragging {
+  opacity: 0.5;
+  border: 2px dashed var(--primary);
+  background-color: var(--primary-light);
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+.song-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.drag-handle {
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 4px 6px;
+  font-size: 0.9rem;
+  display: none;
+  align-items: center;
+  align-self: center;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.song-number {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: rgba(30, 64, 175, 0.08);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.song-title-text {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  flex: 1;
+  line-height: 1.4;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.song-admin-controls {
+  display: none;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+/* 곡 코드 뱃지 스타일 */
+.song-key-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(30, 64, 175, 0.08);
+  color: var(--primary);
+  border: 1px solid rgba(30, 64, 175, 0.15);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  margin-left: 8px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* 아이콘 버튼 공통 */
+.icon-btn {
+  background: none;
+  border: none;
+  outline: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-sub);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.icon-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+}
+
+.icon-btn.danger-btn:hover {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: var(--danger);
+}
+
+.icon-btn.edit-btn:hover {
+  background-color: rgba(30, 64, 175, 0.08);
+  color: var(--primary);
+}
+
+/* 영상/메모/악보 레이아웃 */
+.song-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.song-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.youtube-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.youtube-link-btn:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #B91C1C;
+}
+
+.youtube-link-btn.disabled {
+  background-color: rgba(0, 0, 0, 0.03);
+  color: var(--text-muted);
+  border-color: rgba(229, 231, 235, 0.5);
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* 악보 보기 버튼 */
+.sheet-music-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: rgba(30, 64, 175, 0.08);
+  color: var(--primary);
+  border: 1px solid rgba(30, 64, 175, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.sheet-music-btn:hover {
+  background-color: rgba(30, 64, 175, 0.15);
+  color: var(--primary-dark);
+}
+
+.song-memo-box {
+  background-color: rgba(255, 255, 255, 0.6);
+  border-left: 3px solid var(--primary);
+  padding: 12px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.8125rem;
+  color: var(--text-sub);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* 하단 추가 플로팅바 (블러 및 투명도 극대화) */
+.admin-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px 20px 24px 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.85) 30%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  justify-content: center;
+  z-index: 4;
+}
+
+/* 버튼 정의 */
+.btn-primary {
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: 0 4px 10px rgba(30, 64, 175, 0.25);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  box-shadow: 0 6px 14px rgba(30, 64, 175, 0.35);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-primary.btn-large {
+  width: 100%;
+  padding: 14px;
+  font-size: 0.9375rem;
+  border-radius: var(--radius-md);
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--text-sub);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  outline: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  border-color: var(--text-muted);
+}
+
+/* 모달 기본 스타일 (시뮬레이터 폰 스크린 내 팝업 갇히게 absolute 수정) */
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background-color: #FFFFFF;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80%; /* 모바일 뷰포트 내 세로 한계 지정 및 스크롤바 부여 */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow-y: auto;
+  transform: translateY(20px);
+  transition: transform var(--transition-normal);
+}
+
+.modal-overlay.active .modal-content {
+  transform: translateY(0);
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  background-color: #FAFAFA;
+  border-top: 1px solid rgba(229, 231, 235, 0.5);
+  display: flex;
+  gap: 10px;
+}
+
+.modal-footer button {
+  flex: 1; /* 1:1 가로 균등 분배로 꽉 차게 설정 */
+  justify-content: center;
+  padding: 12px !important;
+  font-size: 0.875rem;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.form-group {
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.form-group label .required {
+  color: var(--danger);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-group select {
+  background-color: #FFFFFF;
+  cursor: pointer;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+}
+
+/* 관리자 모달 내 악보 등록 프리뷰 박스 */
+.sheet-preview-box {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.sheet-preview-thumb {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  background-color: #FFFFFF;
+}
+
+.sheet-preview-info {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 악보 이미지 뷰어 모달 스타일 */
+.sheet-viewer-content {
+  background-color: #FFFFFF;
+  width: 90%;
+  max-width: 380px;
+  height: 80%;
+  max-height: 640px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(20px);
+  transition: transform var(--transition-normal);
+}
+
+.modal-overlay.active .sheet-viewer-content {
+  transform: translateY(0);
+}
+
+.sheet-viewer-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #FFFFFF;
+}
+
+.sheet-viewer-header h3 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.sheet-image-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: #F3F4F6;
+}
+
+.sheet-image-container img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  background-color: #FFFFFF;
+}
+
+/* 빈 목록 상태 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-sub);
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.empty-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* 롤 관리자 모드 활성화 스타일제어 */
+body.admin-mode .drag-handle {
+  display: flex;
+}
+body.admin-mode .song-admin-controls {
+  display: flex;
+}
+body.admin-mode .admin-actions {
+  display: flex;
+}
+
+/* 페이드인 키프레임 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 반응형 처리 */
+@media (max-width: 480px) {
+  body {
+    background-color: var(--bg-phone);
+    align-items: flex-start;
+    min-height: auto;
+  }
+  
+  .app-container {
+    padding: 0;
+    max-width: 100%;
+    height: 100vh;
+  }
+  
+  .phone-frame {
+    width: 100%;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+  }
+  
+  .phone-screen {
+    border-radius: 0;
+  }
+  
+  .sheet-viewer-content {
+    width: 95%;
+    height: 85%;
+    max-height: none;
+  }
+}
