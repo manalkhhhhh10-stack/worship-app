@@ -483,89 +483,141 @@ const localPraiseDB = [
   { title: "다윗처럼 춤을 추면서", artist: "복음성가", key: "G", bpm: "fast", mood: "bright", target: "child", themes: ["thanks", "worship"], reason: "주님의 궤가 돌아올 때 기뻐 날뛰며 바지가 벗겨지도록 찬양했던 다윗의 감격을 유쾌하게 노래합니다." }
 ];
 
-let db = null;
+// ==========================================================================
+// [Firebase 클라우드 실시간 동기화 엔진 설정 및 마이그레이션]
+// ==========================================================================
 
-// 데이터 로드 및 마이그레이션
-function initDatabase() {
+const firebaseConfig = {
+  apiKey: "AIzaSyDCN1DzGrKXvyF3ZdkoWsnq1IuAnl_7oYk",
+  authDomain: "tikitaka-worship.firebaseapp.com",
+  databaseURL: "https://tikitaka-worship-default-rtdb.firebaseio.com",
+  projectId: "tikitaka-worship",
+  storageBucket: "tikitaka-worship.firebasestorage.app",
+  messagingSenderId: "476067828236",
+  appId: "1:476067828236:web:5dff885f8938843dc69429",
+  measurementId: "G-DKWB3F98Y2"
+};
+firebase.initializeApp(firebaseConfig);
+const fbDB = firebase.database();
+
+let db = null;
+let activeSyncListener = null;
+
+// Firebase 클라우드 DB 실시간 리스너 작동 (팀원 간 0.1초 실시간 콘티 씽크 동기화)
+function startCloudSync(churchId) {
+  if (!churchId) return;
+  if (activeSyncListener) {
+    fbDB.ref(`churches/${churchId}`).off('value', activeSyncListener);
+  }
+  
+  activeSyncListener = fbDB.ref(`churches/${churchId}`).on('value', (snapshot) => {
+    const updatedChurch = snapshot.val();
+    if (!updatedChurch) return;
+    
+    // 로컬 메모리에 즉시 반영
+    db.churches[churchId] = updatedChurch;
+    localStorage.setItem('worship_liturgy_db', JSON.stringify(db));
+    
+    // 현재 열려 있는 화면(Screen)에 따라 실시간 UI 재랜더링
+    if (state.currentScreen === 'main') {
+      renderWorshipList();
+      renderNoticeList();
+    } else if (state.currentScreen === 'sub') {
+      renderSubScreen();
+    } else if (state.currentScreen === 'detail') {
+      renderDetailScreen();
+    }
+  });
+}
+
+// 데이터 로드 및 Firebase 실시간 연동/마이그레이션
+async function initDatabase() {
   const localData = localStorage.getItem('worship_liturgy_db');
   if (localData) {
     try {
       db = JSON.parse(localData);
-      
-      // 스키마 마이그레이션: 구버전이거나, 예배 하위 필드에 description이 누락된 경우
-      let isLegacy = !db.churches || !db.churches['church-1'] || !db.churches['church-1'].memberPassword;
-      if (!isLegacy) {
-        const church1 = db.churches['church-1'];
-        if (church1 && church1.worships['service-2'] && !church1.worships['service-2'].description) {
-          isLegacy = true;
-        }
-      }
-      
-      if (isLegacy) {
-        console.log("스키마 변경 감지: 기본 데이터로 재설정합니다.");
-        db = defaultData;
-        // 데모 공지사항 이식
-        db.churches['church-1'].notices = demoNotices['church-1'];
-        db.churches['church-2'].notices = demoNotices['church-2'];
-        saveDatabase();
-      } else {
-        let needsSave = false;
-        
-        // 예배 객체 순회하며 date 및 notices 필드 마이그레이션
-        for (const cId in db.churches) {
-          const church = db.churches[cId];
-          
-          // 공지사항 notices 필드 신설 마이그레이션
-          if (church.notices === undefined) {
-            church.notices = demoNotices[cId] || [];
-            needsSave = true;
-          }
-          
-          for (const wId in church.worships) {
-            const worship = church.worships[wId];
-            if (worship.date === undefined) {
-              worship.date = '2026-07-12'; // 데모 날짜 주일 기준 강제 바인딩
-              needsSave = true;
-            }
-            
-            // 기존 찬양들 중 key 속성이 누락된 경우 메모에서 파싱해주는 유연한 지능형 마이그레이션
-            const weeks = worship.weeks || {};
-            for (const weekId in weeks) {
-              const week = weeks[weekId];
-              if (week.items) {
-                week.items.forEach(song => {
-                  if (song.key === undefined) {
-                    song.key = ""; 
-                    needsSave = true;
-                    if (song.memo) {
-                      const matched = song.memo.match(/([A-G]#?m?|Eb)코드/);
-                      if (matched) {
-                        song.key = matched[1];
-                      }
-                    }
-                  }
-                });
-              }
-            }
-          }
-        }
-        if (needsSave) {
-          saveDatabase();
-        }
-      }
     } catch (e) {
       db = defaultData;
-      // 데모 공지사항 이식
       db.churches['church-1'].notices = demoNotices['church-1'];
       db.churches['church-2'].notices = demoNotices['church-2'];
-      saveDatabase();
     }
   } else {
     db = defaultData;
-    // 데모 공지사항 이식
+    db.churches['church-1'].notices = demoNotices['church-1'];
+    db.churches['church-2'].notices = demoNotices['church-2'];
+  }
+
+  // Firebase 실시간 동기화 및 마이그레이션 개시
+  try {
+    const snapshot = await fbDB.ref('churches').once('value');
+    const cloudChurches = snapshot.val();
+    if (cloudChurches) {
+      db.churches = cloudChurches;
+      console.log("Firebase cloud database synced successfully.");
+    } else {
+      console.log("Firebase is empty. Migrating local database to Firebase cloud...");
+      await fbDB.ref('churches').set(db.churches);
+    }
+  } catch (fbErr) {
+    console.warn("Firebase sync failed, starting in offline local cache mode:", fbErr);
+  }
+
+  // 스키마 마이그레이션: 구버전이거나, 예배 하위 필드에 description이 누락된 경우
+  let isLegacy = !db.churches || !db.churches['church-1'] || !db.churches['church-1'].memberPassword;
+  if (!isLegacy) {
+    const church1 = db.churches['church-1'];
+    if (church1 && church1.worships['service-2'] && !church1.worships['service-2'].description) {
+      isLegacy = true;
+    }
+  }
+  
+  if (isLegacy) {
+    console.log("Schema mismatch: resetting to default structure...");
+    db = defaultData;
     db.churches['church-1'].notices = demoNotices['church-1'];
     db.churches['church-2'].notices = demoNotices['church-2'];
     saveDatabase();
+  } else {
+    let needsSave = false;
+    
+    // 예배 객체 순회하며 date 및 notices 필드 마이그레이션
+    for (const cId in db.churches) {
+      const church = db.churches[cId];
+      if (church.notices === undefined) {
+        church.notices = demoNotices[cId] || [];
+        needsSave = true;
+      }
+      
+      for (const wId in church.worships) {
+        const worship = church.worships[wId];
+        if (worship.date === undefined) {
+          worship.date = '2026-07-12';
+          needsSave = true;
+        }
+        
+        const weeks = worship.weeks || {};
+        for (const weekId in weeks) {
+          const week = weeks[weekId];
+          if (week.items) {
+            week.items.forEach(song => {
+              if (song.key === undefined) {
+                song.key = ""; 
+                needsSave = true;
+                if (song.memo) {
+                  const matched = song.memo.match(/([A-G]#?m?|Eb)코드/);
+                  if (matched) {
+                    song.key = matched[1];
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+    if (needsSave) {
+      saveDatabase();
+    }
   }
   
   // 로그인 세션 확인 후 자동 진입
@@ -667,9 +719,17 @@ async function fetchGPTRecommendations(apiKey, target, theme, currentSong, reqKe
   }
 }
 
-// 로컬스토리지 저장
+// 로컬 및 Firebase 클라우드 DB 실시간 동기화 저장
 function saveDatabase() {
   localStorage.setItem('worship_liturgy_db', JSON.stringify(db));
+  
+  if (db.activeChurchId) {
+    fbDB.ref(`churches/${db.activeChurchId}`).set(db.churches[db.activeChurchId])
+      .catch(err => console.error("Firebase sync error: ", err));
+  } else {
+    fbDB.ref('churches').set(db.churches)
+      .catch(err => console.error("Firebase sync error: ", err));
+  }
 }
 
 // ==========================================================================
@@ -880,6 +940,9 @@ function setSessionAndEnter(churchId, role) {
     document.getElementById('app-title').textContent = church.teamName;
   }
   
+  // Firebase 실시간 동기화 리스너 개시
+  startCloudSync(churchId);
+  
   // 메인 진입 시 탭 초기화(콘티 확인) 및 렌더링
   switchMainTab('conti');
   navigateTo('main');
@@ -887,6 +950,11 @@ function setSessionAndEnter(churchId, role) {
 
 // 로그아웃
 function logout() {
+  if (db.activeChurchId && activeSyncListener) {
+    fbDB.ref(`churches/${db.activeChurchId}`).off('value', activeSyncListener);
+    activeSyncListener = null;
+  }
+
   db.activeChurchId = null;
   db.activeRole = 'member';
   saveDatabase();
@@ -900,7 +968,9 @@ function logout() {
   state.currentTab = 'conti';
   
   document.body.classList.remove('admin-mode');
-  navigateTo('auth');
+  
+  // 안전하게 페이지 리로드하여 모든 세션 및 리스너 초기화
+  location.reload();
 }
 
 // ==========================================================================
