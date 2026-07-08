@@ -13,37 +13,9 @@ const state = {
   isLocalWriting: false         // 로컬 데이터 저장 중 클라우드 롤백 충돌을 방지하는 동기화 락(Lock)
 };
 
-// 텅 빈 예배 데이터 구조 생성 템플릿
+// 텅 빈 예배 데이터 구조 생성 템플릿 (사용자가 처음부터 직접 예배를 등록해서 사용하도록 텅 빈 구조 지원)
 function getEmptyWorshipStructure() {
-  return {
-    'service-2': {
-      title: '2부 예배',
-      description: '주일 오전 9:00 대예배',
-      date: '2026-07-12',
-      weeks: {
-        'this-week': { title: '이번 주 찬양', items: [] },
-        'next-week': { title: '다음 주 찬양', items: [] }
-      }
-    },
-    'service-3': {
-      title: '3부 예배',
-      description: '주일 오전 11:00 대예배',
-      date: '2026-07-12',
-      weeks: {
-        'this-week': { title: '이번 주 찬양', items: [] },
-        'next-week': { title: '다음 주 찬양', items: [] }
-      }
-    },
-    'service-4': {
-      title: '4부 예배',
-      description: '주일 오후 1:30 청년예배',
-      date: '2026-07-12',
-      weeks: {
-        'this-week': { title: '이번 주 찬양', items: [] },
-        'next-week': { title: '다음 주 찬양', items: [] }
-      }
-    }
-  };
+  return {};
 }
 
 // 최초 구동 시 셋업될 다중 테넌트 기본 데이터 (Mock Data)
@@ -57,119 +29,7 @@ const defaultData = {
       adminPassword: '1234',
       memberPassword: '1111',  // 팀원 입장 비밀번호
       teamName: '사랑교회 찬양팀',
-      worships: {
-        'service-2': {
-          title: '2부 예배',
-          description: '주일 오전 9:00 대예배',
-          date: '2026-07-12',
-          weeks: {
-            'this-week': {
-              title: '이번 주 찬양',
-              items: [
-                {
-                  id: 'song-sarang-2-this-1',
-                  title: '예배합니다 (완전한 사랑 보여주신)',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=J_jK93T296Q',
-                  memo: 'F코드. 첫 곡으로 차분하게 예배의 시작을 돕습니다. 피아노 반주 단독 인트로입니다.',
-                  key: 'F',
-                  sheetMusic: null
-                },
-                {
-                  id: 'song-sarang-2-this-2',
-                  title: '나의 백성이 (이 땅 고치소서)',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=680wB5j2n10',
-                  memo: 'G코드. 중보 기도 전 회중의 뜨거운 결단을 이끌어내는 찬양입니다.',
-                  key: 'G',
-                  sheetMusic: null
-                }
-              ]
-            },
-            'next-week': {
-              title: '다음 주 찬양',
-              items: [
-                {
-                  id: 'song-sarang-2-next-1',
-                  title: '원하고 바라고 기도합니다',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=kCgG211dYc0',
-                  memo: 'Eb코드. 멜로디가 매끄럽게 흘러가도록 싱어 분들의 호흡 처리에 유의해 주세요.',
-                  key: 'Eb',
-                  sheetMusic: null
-                }
-              ]
-            },
-            'archive-sarang-2-past-1': {
-              title: '7월 첫째 주 예배',
-              date: '2026-07-05',
-              items: [
-                {
-                  id: 'song-sarang-2-past-1-1',
-                  title: '시간을 뚫고',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=2e1g-8V_YhQ',
-                  memo: 'A코드 미디엄 템포 찬양입니다.',
-                  key: 'A',
-                  sheetMusic: null
-                },
-                {
-                  id: 'song-sarang-2-past-1-2',
-                  title: '꽃들도 (구름들을 헤치고)',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=7u7a2L1Yv9s',
-                  memo: 'G코드 빠른 비트 기쁨 가득 찬양!',
-                  key: 'G',
-                  sheetMusic: null
-                }
-              ]
-            }
-          }
-        },
-        'service-3': {
-          title: '3부 예배',
-          description: '주일 오전 11:00 대예배',
-          date: '2026-07-12',
-          weeks: {
-            'this-week': {
-              title: '이번 주 찬양',
-              items: [
-                {
-                  id: 'song-sarang-3-this-1',
-                  title: '은혜 아래 있네',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=t7z5mK1o9Dk',
-                  memo: 'G코드 미디엄 템포 곡입니다.',
-                  key: 'G',
-                  sheetMusic: null
-                }
-              ]
-            },
-            'next-week': {
-              title: '다음 주 찬양',
-              items: []
-            }
-          }
-        },
-        'service-4': {
-          title: '4부 예배',
-          description: '주일 오후 1:30 청년예배',
-          date: '2026-07-12',
-          weeks: {
-            'this-week': {
-              title: '이번 주 찬양',
-              items: [
-                {
-                  id: 'song-sarang-4-this-1',
-                  title: '밤이나 낮이나',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=q6t8101i1G4',
-                  memo: 'E코드 찬양. 회중 기도회 때 강하게 빌드업합니다.',
-                  key: 'E',
-                  sheetMusic: null
-                }
-              ]
-            },
-            'next-week': {
-              title: '다음 주 찬양',
-              items: []
-            }
-          }
-        }
-      }
+      worships: {}
     },
     'church-2': {
       id: 'church-2',
@@ -177,83 +37,10 @@ const defaultData = {
       adminPassword: '5678',
       memberPassword: '2222',  // 팀원 입장 비밀번호
       teamName: '소망교회 찬양팀',
-      worships: {
-        'service-2': {
-          title: '2부 예배',
-          description: '주일 오전 9:00 대예배',
-          date: '2026-07-12',
-          weeks: {
-            'this-week': {
-              title: '이번 주 찬양',
-              items: [
-                {
-                  id: 'song-somang-2-this-1',
-                  title: '시간을 뚫고',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=2e1g-8V_YhQ',
-                  memo: 'A코드 미디엄 템포 찬양입니다.',
-                  key: 'A',
-                  sheetMusic: null
-                }
-              ]
-            },
-            'next-week': {
-              title: '다음 주 찬양',
-              items: []
-            }
-          }
-        },
-        'service-3': {
-          title: '3부 예배',
-          description: '주일 오전 11:00 대예배',
-          date: '2026-07-12',
-          weeks: {
-            'this-week': {
-              title: '이번 주 찬양',
-              items: [
-                {
-                  id: 'song-somang-3-this-1',
-                  title: '예수 피를 힘입어',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=7u7a2L1Yv9s',
-                  memo: 'E코드 차분한 묵상곡입니다.',
-                  key: 'E',
-                  sheetMusic: null
-                }
-              ]
-            },
-            'next-week': {
-              title: '다음 주 찬양',
-              items: []
-            }
-          }
-        },
-        'service-4': {
-          title: '4부 예배',
-          description: '주일 오후 1:30 청년예배',
-          date: '2026-07-12',
-          weeks: {
-            'this-week': {
-              title: '이번 주 찬양',
-              items: [
-                {
-                  id: 'song-somang-4-this-1',
-                  title: '내 마음을 가득 채운',
-                  youtubeUrl: 'https://www.youtube.com/watch?v=H7cR2v1s19k',
-                  memo: 'E코드 신나고 빠른 비트 연주.',
-                  key: 'E',
-                  sheetMusic: null
-                }
-              ]
-            },
-            'next-week': {
-              title: '다음 주 찬양',
-              items: []
-            }
-          }
-        }
-      }
+      worships: {}
     }
   }
-};
+};;
 
 // 데모용 공지사항 데이터 선언
 const demoNotices = {
