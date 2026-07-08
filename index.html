@@ -3,10 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>교회 찬양팀 콘티</title>
-  <!-- SEO 메타 태그 -->
-  <meta name="description" content="교회 찬양팀을 위한 빠르고 직관적인 모바일 찬양 콘티 관리 앱">
-  <meta name="theme-color" content="#3B82F6">
+  <title>TIKITAKA BAND - 실시간 콘티 보드</title>
+  
+  <!-- 웹 앱 단축바 / 홈 화면 저장 아이콘 & 파비콘 연동 -->
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="shortcut icon" href="logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="logo.png">
+  
+  <!-- 카카오톡 / SNS 공유 썸네일 & SEO 메타 태그 -->
+  <meta name="description" content="0.1초 만에 실시간으로 공유되고 동기화되는 찬양팀 콘티 스마트 보드">
+  <meta name="theme-color" content="#6366f1">
+  <meta property="og:title" content="TIKITAKA BAND">
+  <meta property="og:description" content="0.1초 실시간 콘티 싱크 및 AI 예배 큐레이션 도우미">
+  <meta property="og:image" content="https://manalkhhhhh10-stack.github.io/worship-app/logo.png">
+  <meta property="og:url" content="https://manalkhhhhh10-stack.github.io/worship-app/">
+  
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,12 +35,10 @@
         
         <!-- [1] 로그인 / 교회 가입 화면 (최초 화면) -->
         <div id="screen-auth" class="screen active">
-          <header class="auth-header">
-            <div class="logo-circle auth-logo">
-              <i class="fa-solid fa-music"></i>
-            </div>
-            <h1 class="auth-title">Worship Liturgy</h1>
-            <p class="auth-subtitle">교회 찬양팀 콘티 플랫폼</p>
+          <header class="auth-header" style="padding-top: 24px; padding-bottom: 12px;">
+            <img src="logo.png" alt="TIKITAKA BAND 로고" style="width: 130px; height: 130px; object-fit: contain; margin-bottom: 8px; filter: drop-shadow(0px 8px 16px rgba(99,102,241,0.2));">
+            <h1 class="auth-title" style="font-size: 1.55rem; color: #312e81; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 2px;">TIKITAKA BAND</h1>
+            <p class="auth-subtitle" style="font-size: 0.8rem; color: #6366f1; font-weight: 600;">실시간 찬양 콘티 공유 보드</p>
           </header>
           
           <main class="screen-content auth-content">
