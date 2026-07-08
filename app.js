@@ -9,7 +9,8 @@ const state = {
   editingNoticeId: null,       // 현재 편집중인 공지사항 ID
   selectedSearchChurchId: null, // 검색창에서 선택된 로그인 대상 교회 ID
   uploadedSheetMusicBase64: null, // 파일 업로드 시 임시로 보관할 compressed Base64
-  aiCache: {}                  // AI 찬양 추천 결과 임시 인메모리 캐시 (속도 향상 마스터키)
+  aiCache: {},                  // AI 찬양 추천 결과 임시 인메모리 캐시 (속도 향상 마스터키)
+  isLocalWriting: false         // 로컬 데이터 저장 중 클라우드 롤백 충돌을 방지하는 동기화 락(Lock)
 };
 
 // 텅 빈 예배 데이터 구조 생성 템플릿
@@ -511,6 +512,9 @@ function startCloudSync(churchId) {
   }
   
   activeSyncListener = fbDB.ref(`churches/${churchId}`).on('value', (snapshot) => {
+    // 로컬에서 데이터 저장 중인 경우, 클라우드 값 수신으로 인한 UI 롤백/리로드 방지
+    if (state.isLocalWriting) return;
+    
     const updatedChurch = snapshot.val();
     if (!updatedChurch) return;
     
@@ -723,13 +727,22 @@ async function fetchGPTRecommendations(apiKey, target, theme, currentSong, reqKe
 function saveDatabase() {
   localStorage.setItem('worship_liturgy_db', JSON.stringify(db));
   
-  if (db.activeChurchId) {
-    fbDB.ref(`churches/${db.activeChurchId}`).set(db.churches[db.activeChurchId])
-      .catch(err => console.error("Firebase sync error: ", err));
-  } else {
-    fbDB.ref('churches').set(db.churches)
-      .catch(err => console.error("Firebase sync error: ", err));
-  }
+  // 클라우드 동기화 락 작동
+  state.isLocalWriting = true;
+  
+  const syncPromise = db.activeChurchId
+    ? fbDB.ref(`churches/${db.activeChurchId}`).set(db.churches[db.activeChurchId])
+    : fbDB.ref('churches').set(db.churches);
+    
+  syncPromise
+    .then(() => {
+      // 0.8초의 네트워크 마진을 두고 동기화 락 안전 해제
+      setTimeout(() => { state.isLocalWriting = false; }, 800);
+    })
+    .catch(err => {
+      console.error("Firebase sync error: ", err);
+      setTimeout(() => { state.isLocalWriting = false; }, 800);
+    });
 }
 
 // ==========================================================================
