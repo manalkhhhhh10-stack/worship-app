@@ -1401,7 +1401,7 @@ body.admin-mode .admin-actions {
   width: 100%;
   height: 100%;
   background-color: #0d0e15; /* 고급스러운 딥 블랙 네이비 */
-  z-index: 9999; /* 모든 화면의 최상단 */
+  z-index: 99999 !important; /* 폰 프레임 내부 다른 screen들 위로 강제 노출 */
   display: flex;
   justify-content: center;
   align-items: center;
