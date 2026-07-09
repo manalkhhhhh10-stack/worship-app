@@ -67,6 +67,11 @@
                   <span id="auth-selected-church-name">선택된 교회</span>
                 </div>
                 
+                <div class="form-group p-0 mb-12" style="margin-bottom: 12px;">
+                  <label for="auth-user-name" style="font-size: 0.75rem; color: var(--text-sub); display: block; margin-bottom: 4px; font-weight: 600;">내 이름 (실명) <span class="required">*</span></label>
+                  <input type="text" id="auth-user-name" placeholder="활동할 내 실명을 입력해 주세요" required autocomplete="off" style="padding: 10px; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8125rem;">
+                </div>
+                
                 <div class="login-actions">
                   <div class="form-group p-0">
                     <input type="password" id="auth-member-password" placeholder="팀원 입장 비밀번호 (숫자 4자리)" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" autocomplete="off">
@@ -120,9 +125,12 @@
                     <i class="fa-solid fa-pen"></i>
                   </button>
                 </div>
-                <div class="subtitle-row">
-                  <p class="app-subtitle">교회 찬양팀 콘티 관리</p>
-                  <span id="badge-role-main" class="role-badge">관리자</span>
+                <div class="subtitle-row" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+                  <p class="app-subtitle" style="margin-bottom: 0;">교회 찬양팀 콘티 관리</p>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span id="user-name-main" style="font-size: 0.6875rem; font-weight: 700; color: #4f46e5; background: rgba(99,102,241,0.08); padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid rgba(99,102,241,0.15); display: inline-block; white-space: nowrap;">사용자</span>
+                    <span id="badge-role-main" class="role-badge">관리자</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -142,6 +150,46 @@
             <div id="area-main-notice" class="tab-area">
               <div id="notice-list" class="card-list">
                 <!-- 공지사항 리스트 카드가 JS를 통해 동적으로 로드됨 -->
+              </div>
+            </div>
+
+            <!-- [NEW] [D] 오늘의 말씀 & 묵상 나눔 탭 영역 -->
+            <div id="area-main-devotion" class="tab-area">
+              <!-- 오늘의 말씀 카드 -->
+              <div class="daily-devotion-card" style="background: linear-gradient(135deg, #e0e7ff 0%, #f5f3ff 100%); border: 1px solid rgba(99,102,241,0.18); border-radius: var(--radius-md); padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 0.75rem; font-weight: 700; color: #4f46e5; background: rgba(99,102,241,0.08); padding: 2px 7px; border-radius: var(--radius-sm); border: 1px solid rgba(99,102,241,0.15); display: inline-flex; align-items: center; gap: 3px;"><i class="fa-solid fa-book-open"></i> 오늘의 말씀 묵상</span>
+                  <span id="daily-verse-title" style="font-size: 0.72rem; font-weight: 700; color: var(--text-sub);">시편 150:6</span>
+                </div>
+                <p id="daily-verse-content" style="font-size: 0.875rem; font-weight: 600; color: var(--text-main); line-height: 1.5; margin: 6px 0; font-style: normal;">“호흡이 있는 자마다 여호와를 찬양할지어다 할렐루야”</p>
+              </div>
+
+              <!-- 묵상글 작성 폼 (출석 연동) -->
+              <div id="my-devotion-form-box" style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px; box-shadow: var(--shadow-xs);">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 8px;"><i class="fa-solid fa-pen-nib" style="color: #6366f1;"></i> 오늘의 묵상 나누기</span>
+                <textarea id="devotion-post-input" placeholder="오늘 시편 구절을 읽고 묵상하며 느낀 점을 자유롭게 적어 공유해 보세요. (글을 등록하시면 오늘 찬양팀 출석체크가 완료됩니다!)" style="width: 100%; height: 90px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8125rem; font-family: inherit; line-height: 1.4; resize: none; outline: none; margin-bottom: 8px; transition: border-color 0.2s;" onfocus="this.style.borderColor='#818cf8';" onblur="this.style.borderColor='var(--border)';"></textarea>
+                <button type="button" id="btn-submit-devotion-post" class="btn-primary" style="padding: 10px; font-size: 0.75rem; font-weight: 700; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; border-radius: var(--radius-sm); cursor: pointer;"><i class="fa-solid fa-paper-plane"></i> 묵상 등록 & 출석체크</button>
+              </div>
+              <div id="my-devotion-complete-msg" style="display: none; text-align: center; background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 14px; font-size: 0.78rem; font-weight: 700; color: #059669; margin-bottom: 14px;">
+                🎉 오늘의 말씀 묵상 나눔과 출석체크를 완료하셨습니다!
+              </div>
+
+              <!-- 관리자 전용 오늘 찬양팀 출석부 -->
+              <div id="admin-attendance-box" style="display: none; background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(229, 231, 235, 0.7); border-radius: var(--radius-md); padding: 12px; margin-bottom: 14px; box-shadow: var(--shadow-xs);">
+                <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
+                  <i class="fa-solid fa-clipboard-user" style="color: #10b981; font-size: 0.85rem;"></i>
+                  <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">오늘 찬양팀 출석부 (실시간)</span>
+                  <span id="attendance-count-badge" style="font-size: 0.65rem; background: #10b981; color: #fff; padding: 1px 5px; border-radius: 10px; font-weight: 800; margin-left: 2px;">0명</span>
+                </div>
+                <div id="attendance-list-container" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  <!-- 출석 완료 명단 동적 표기 -->
+                </div>
+              </div>
+
+              <!-- 실시간 묵상 피드 & 댓글 게시판 영역 -->
+              <h4 style="font-size: 0.8125rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; border-left: 3px solid #6366f1; padding-left: 8px;"><i class="fa-regular fa-comments"></i> 찬양팀 묵상 나눔 피드</h4>
+              <div id="devotion-feed-container" class="card-list" style="display: flex; flex-direction: column; gap: 12px; padding-bottom: 24px;">
+                <!-- 동적으로 다른 유저들의 글들과 댓글이 생성됨 -->
               </div>
             </div>
             
@@ -345,13 +393,17 @@
           
           <!-- 하단 고정 네비게이션 탭바 -->
           <nav class="bottom-tab-bar">
-            <button id="btn-tab-conti" class="tab-item active">
-              <i class="fa-solid fa-music"></i>
-              <span>콘티 확인</span>
-            </button>
-            <button id="btn-tab-notice" class="tab-item">
+            <button id="btn-tab-notice" class="tab-item active">
               <i class="fa-solid fa-bullhorn"></i>
               <span>공지사항</span>
+            </button>
+            <button id="btn-tab-devotion" class="tab-item">
+              <i class="fa-solid fa-book-open"></i>
+              <span>오늘의 말씀</span>
+            </button>
+            <button id="btn-tab-conti" class="tab-item">
+              <i class="fa-solid fa-music"></i>
+              <span>콘티 확인</span>
             </button>
             <button id="btn-tab-ai" class="tab-item">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
@@ -438,6 +490,18 @@
             <div style="width: 32px; height: 32px;"></div> <!-- 우측 균형용 빈 엘리먼트 -->
           </header>
           <main class="screen-content detail-content">
+            <!-- [NEW] 실시간 콘티 조회자 리스트 영역 -->
+            <div id="worship-viewers-box" style="display: none; background: rgba(255,255,255,0.7); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 12px; font-size: 0.72rem; box-shadow: var(--shadow-xs);">
+              <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 6px; font-weight: 700; color: var(--text-sub);">
+                <i class="fa-regular fa-eye" style="color: #6366f1;"></i>
+                <span>이 콘티를 확인한 팀원</span>
+                <span id="viewer-count-badge" style="font-size: 0.625rem; background: #6366f1; color: #fff; padding: 1px 4px; border-radius: 8px; font-weight: 800; margin-left: 2px;">0명</span>
+              </div>
+              <div id="viewer-list-container" style="display: flex; flex-wrap: wrap; gap: 5px;">
+                <!-- 확인한 팀원 뱃지들이 동적으로 추가됨 -->
+              </div>
+            </div>
+
             <div id="song-list" class="song-list">
               <!-- 찬양 아이템들이 JS를 통해 동적으로 로드됨 -->
             </div>

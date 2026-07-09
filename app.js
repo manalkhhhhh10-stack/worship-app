@@ -1,7 +1,7 @@
 // 앱 상태 관리 객체 (세션과 분리된 임시 화면 상태)
 const state = {
   currentScreen: 'auth',       // 'auth', 'main', 'sub', 'history', 'detail'
-  currentTab: 'conti',         // 메인 화면 내 활성화된 탭 ('conti' | 'notice' | 'ai-rec')
+  currentTab: 'notice',        // 메인 화면 내 활성화된 탭 ('notice' | 'devotion' | 'conti' | 'ai-rec')
   selectedServiceId: null,     // 'service-2', 'service-3', 'service-4', 'service-custom-...'
   selectedWeekId: null,        // 'this-week', 'next-week', 'archive-...'
   editingSongId: null,         // 현재 편집중인 찬양 ID
@@ -10,7 +10,8 @@ const state = {
   selectedSearchChurchId: null, // 검색창에서 선택된 로그인 대상 교회 ID
   uploadedSheetMusicBase64: null, // 파일 업로드 시 임시로 보관할 compressed Base64
   aiCache: {},                  // AI 찬양 추천 결과 임시 인메모리 캐시 (속도 향상 마스터키)
-  isLocalWriting: false         // 로컬 데이터 저장 중 클라우드 롤백 충돌을 방지하는 동기화 락(Lock)
+  isLocalWriting: false,        // 로컬 데이터 저장 중 클라우드 롤백 충돌을 방지하는 동기화 락(Lock)
+  userName: ""                  // 현재 로그인한 사용자의 실명
 };
 
 // 텅 빈 예배 데이터 구조 생성 템플릿 (사용자가 처음부터 직접 예배를 등록해서 사용하도록 텅 빈 구조 지원)
@@ -386,11 +387,19 @@ async function initDatabase() {
   } else {
     let needsSave = false;
     
-    // 예배 객체 순회하며 date 및 notices 필드 마이그레이션
+    // 예배 객체 순회하며 date, notices, attendances 필드 마이그레이션
     for (const cId in db.churches) {
       const church = db.churches[cId];
       if (church.notices === undefined) {
         church.notices = demoNotices[cId] || [];
+        needsSave = true;
+      }
+      if (church.attendances === undefined) {
+        church.attendances = {};
+        needsSave = true;
+      }
+      if (church.devotions === undefined) {
+        church.devotions = {};
         needsSave = true;
       }
       
@@ -428,6 +437,7 @@ async function initDatabase() {
   
   // 로그인 세션 확인 후 자동 진입
   if (db.activeChurchId && db.churches[db.activeChurchId]) {
+    state.userName = localStorage.getItem('worship_liturgy_username') || "사용자";
     setSessionAndEnter(db.activeChurchId, db.activeRole);
   } else {
     navigateTo('auth');
@@ -645,12 +655,21 @@ function selectSearchChurch(churchId, churchName) {
 function loginAsMember() {
   if (!state.selectedSearchChurchId) return;
   
+  const enteredName = document.getElementById('auth-user-name').value.trim();
+  if (!enteredName) {
+    alert('팀원 입장을 위해 본인의 이름을 입력해 주세요.');
+    return;
+  }
+  
   const enteredPassword = document.getElementById('auth-member-password').value.trim();
   const church = db.churches[state.selectedSearchChurchId];
   
   if (!church) return;
   
   if (enteredPassword === church.memberPassword) {
+    state.userName = enteredName;
+    localStorage.setItem('worship_liturgy_username', enteredName);
+    
     db.activeChurchId = state.selectedSearchChurchId;
     db.activeRole = 'member';
     saveDatabase();
@@ -665,12 +684,21 @@ function loginAsMember() {
 function loginAsAdmin() {
   if (!state.selectedSearchChurchId) return;
   
+  const enteredName = document.getElementById('auth-user-name').value.trim();
+  if (!enteredName) {
+    alert('대표 관리자 로그인을 위해 본인의 이름을 입력해 주세요.');
+    return;
+  }
+  
   const enteredPassword = document.getElementById('auth-admin-password').value;
   const church = db.churches[state.selectedSearchChurchId];
   
   if (!church) return;
   
   if (enteredPassword === church.adminPassword) {
+    state.userName = enteredName;
+    localStorage.setItem('worship_liturgy_username', enteredName);
+    
     db.activeChurchId = state.selectedSearchChurchId;
     db.activeRole = 'admin';
     saveDatabase();
@@ -716,13 +744,16 @@ function registerChurch(event) {
   };
   
   db.churches[newChurchId] = newChurch;
-  
-  db.activeChurchId = newChurchId;
-  db.activeRole = 'admin';
   saveDatabase();
   
+  alert('성공적으로 등록되었습니다!\n[우리 교회 찾기] 탭에서 등록하신 교회 이름을 검색하고 실명을 적은 뒤 입장해 주세요.');
+  
   document.getElementById('auth-register-form').reset();
-  setSessionAndEnter(newChurchId, 'admin');
+  
+  // 가입 폼 초기화 후 교회 찾기 로그인 탭으로 스위칭 및 검색창 세팅
+  switchAuthTab('find');
+  document.getElementById('auth-search-input').value = churchName;
+  searchChurches();
 }
 
 // 세션을 설정하고 메인 화면에 진입하는 브릿지 함수
@@ -750,11 +781,15 @@ function setSessionAndEnter(churchId, role) {
     badgeSub.classList.remove('member');
     badgeHistory.classList.remove('member');
     badgeDetail.classList.remove('member');
+    const btnAI = document.getElementById('btn-tab-ai');
+    if (btnAI) btnAI.style.display = 'flex';
   } else {
     badgeMain.classList.add('member');
     badgeSub.classList.add('member');
     badgeHistory.classList.add('member');
     badgeDetail.classList.add('member');
+    const btnAI = document.getElementById('btn-tab-ai');
+    if (btnAI) btnAI.style.display = 'none';
   }
   
   const church = db.churches[churchId];
@@ -762,11 +797,17 @@ function setSessionAndEnter(churchId, role) {
     document.getElementById('app-title').textContent = church.teamName;
   }
   
+  // 실명 뱃지 UI 갱신
+  const nameMain = document.getElementById('user-name-main');
+  if (nameMain) {
+    nameMain.textContent = state.userName || "사용자";
+  }
+  
   // Firebase 실시간 동기화 리스너 개시
   startCloudSync(churchId);
   
-  // 메인 진입 시 탭 초기화(콘티 확인) 및 렌더링
-  switchMainTab('conti');
+  // 메인 진입 시 탭 초기화(공지사항) 및 렌더링
+  switchMainTab('notice');
   navigateTo('main');
 }
 
@@ -777,6 +818,10 @@ function logout() {
     activeSyncListener = null;
   }
 
+  // 실명 세션 완전 삭제
+  localStorage.removeItem('worship_liturgy_username');
+  state.userName = "";
+
   db.activeChurchId = null;
   db.activeRole = 'member';
   saveDatabase();
@@ -786,8 +831,9 @@ function logout() {
   document.getElementById('auth-login-form').classList.remove('active');
   document.getElementById('auth-member-password').value = '';
   document.getElementById('auth-admin-password').value = '';
+  document.getElementById('auth-user-name').value = '';
   state.selectedSearchChurchId = null;
-  state.currentTab = 'conti';
+  state.currentTab = 'notice';
   
   document.body.classList.remove('admin-mode');
   
@@ -803,9 +849,12 @@ function switchMainTab(tabName) {
   
   const btnConti = document.getElementById('btn-tab-conti');
   const btnNotice = document.getElementById('btn-tab-notice');
+  const btnDevotion = document.getElementById('btn-tab-devotion');
   const btnAI = document.getElementById('btn-tab-ai');
+  
   const areaConti = document.getElementById('area-main-conti');
   const areaNotice = document.getElementById('area-main-notice');
+  const areaDevotion = document.getElementById('area-main-devotion');
   const areaAI = document.getElementById('area-main-ai');
   
   const btnAddWorship = document.getElementById('btn-add-worship');
@@ -813,9 +862,12 @@ function switchMainTab(tabName) {
   
   btnConti.classList.remove('active');
   btnNotice.classList.remove('active');
+  if (btnDevotion) btnDevotion.classList.remove('active');
   btnAI.classList.remove('active');
+  
   areaConti.classList.remove('active');
   areaNotice.classList.remove('active');
+  if (areaDevotion) areaDevotion.classList.remove('active');
   areaAI.classList.remove('active');
   
   if (tabName === 'conti') {
@@ -836,6 +888,14 @@ function switchMainTab(tabName) {
     btnAddNotice.style.display = 'flex';
     
     renderNoticeList();
+  } else if (tabName === 'devotion') {
+    if (btnDevotion) btnDevotion.classList.add('active');
+    if (areaDevotion) areaDevotion.classList.add('active');
+    
+    btnAddWorship.style.display = 'none';
+    btnAddNotice.style.display = 'none';
+    
+    renderDevotionTab();
   } else if (tabName === 'ai-rec') {
     btnAI.classList.add('active');
     areaAI.classList.add('active');
@@ -1086,12 +1146,17 @@ function renderNoticeList() {
       </div>
     `;
 
+    const authorHtml = `<span style="font-size: 0.6875rem; color: var(--text-muted); font-weight: 500; display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.03); padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid rgba(0,0,0,0.05);"><i class="fa-regular fa-user" style="font-size: 0.6rem;"></i> ${escapeHtml(notice.createdBy || '관리자')}</span>`;
+
     card.innerHTML = `
       <div class="notice-icon-wrapper"><i class="fa-solid fa-bullhorn"></i></div>
       <div class="card-info">
         <div class="card-title-row">
           <h3 class="card-title">${escapeHtml(notice.title)}</h3>
-          ${dateBadgeHtml}
+          <div style="display: flex; gap: 4px; align-items: center;">
+            ${authorHtml}
+            ${dateBadgeHtml}
+          </div>
         </div>
         <p class="card-desc">${escapeHtml(notice.content)}</p>
       </div>
@@ -1349,6 +1414,9 @@ function saveNotice(event) {
       notice.title = title;
       notice.date = date;
       notice.content = content;
+      if (!notice.createdBy) {
+        notice.createdBy = state.userName || "관리자";
+      }
     }
   } else {
     // 추가
@@ -1356,7 +1424,8 @@ function saveNotice(event) {
       id: 'notice-' + Date.now(),
       title: title,
       date: date,
-      content: content
+      content: content,
+      createdBy: state.userName || "관리자" // 👈 실명 연동 작성자 태깅!
     };
     church.notices.push(newNotice);
   }
@@ -1811,7 +1880,8 @@ function saveRecAddToLiturgy(event) {
     key: key,
     youtubeUrl: youtubeUrl,
     memo: `[AI 예배 디렉터 추천사]\n${reason}`,
-    sheetMusic: null
+    sheetMusic: null,
+    createdBy: state.userName || "관리자" // 👈 실명 연동 작성자 태깅!
   };
   
   week.items.push(newSong);
@@ -2066,6 +2136,53 @@ function renderSongList() {
   const week = worship.weeks[state.selectedWeekId];
   if (!week) return;
   
+  // [NEW] 콘티 상세 조회자 실시간 기록
+  if (!week.viewers) {
+    week.viewers = {};
+  }
+  if (state.userName) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+    if (week.viewers[state.userName] !== timeStr) {
+      week.viewers[state.userName] = timeStr;
+      saveDatabase();
+    }
+  }
+  
+  // [NEW] 실시간 콘티 조회자 UI 렌더링
+  const viewersBox = document.getElementById('worship-viewers-box');
+  const viewersContainer = document.getElementById('viewer-list-container');
+  if (viewersBox && viewersContainer) {
+    const viewerNames = Object.keys(week.viewers || {});
+    if (viewerNames.length > 0) {
+      viewersBox.style.display = 'block';
+      viewersContainer.innerHTML = '';
+      
+      document.getElementById('viewer-count-badge').textContent = `${viewerNames.length}명`;
+      
+      viewerNames.forEach(name => {
+        const time = week.viewers[name];
+        const badge = document.createElement('span');
+        badge.style.cssText = `
+          background: rgba(99, 102, 241, 0.06);
+          border: 1px solid rgba(99, 102, 241, 0.16);
+          color: #4f46e5;
+          padding: 2px 7px;
+          border-radius: var(--radius-sm);
+          font-size: 0.6875rem;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+        `;
+        badge.innerHTML = `<i class="fa-regular fa-eye" style="font-size: 0.6rem;"></i> ${escapeHtml(name)} (${time})`;
+        viewersContainer.appendChild(badge);
+      });
+    } else {
+      viewersBox.style.display = 'none';
+    }
+  }
+  
   const items = week.items || [];
   
   if (items.length === 0) {
@@ -2109,6 +2226,9 @@ function renderSongList() {
          
     // 곡 코드(Key) 배지 렌더링
     const keyBadgeHtml = song.key ? `<span class="song-key-badge">${escapeHtml(song.key)} Key</span>` : '';
+    
+    // 작성자 실명 뱃지 렌더링
+    const authorBadgeHtml = `<span style="font-size: 0.625rem; font-weight: 500; color: #4f46e5; background: rgba(99,102,241,0.05); border: 1px solid rgba(99,102,241,0.15); padding: 1px 5px; border-radius: var(--radius-sm); margin-left: 4px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;"><i class="fa-regular fa-user" style="font-size: 0.55rem;"></i> ${escapeHtml(song.createdBy || '인도자')}</span>`;
          
     // 메모 박스
     const hasMemo = song.memo && song.memo.trim() !== '';
@@ -2134,7 +2254,7 @@ function renderSongList() {
           <i class="fa-solid fa-grip-lines"></i>
         </div>
         <span class="song-number">${getCircleNumber(index + 1)}</span>
-        <span class="song-title-text">${escapeHtml(song.title)}${keyBadgeHtml}</span>
+        <span class="song-title-text" style="display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px;">${escapeHtml(song.title)}${keyBadgeHtml}${authorBadgeHtml}</span>
         ${adminControlsHtml}
       </div>
       <div class="song-body">
@@ -2327,6 +2447,10 @@ function saveSong(event) {
       week.items[songIndex].youtubeUrl = youtubeUrl;
       week.items[songIndex].memo = memo;
       week.items[songIndex].sheetMusic = state.uploadedSheetMusicBase64;
+      // 기존 작성자가 없으면 현재 유저명 부여
+      if (!week.items[songIndex].createdBy) {
+        week.items[songIndex].createdBy = state.userName || "관리자";
+      }
     }
   } else {
     // 추가
@@ -2336,7 +2460,8 @@ function saveSong(event) {
       key: key,
       youtubeUrl: youtubeUrl,
       memo: memo,
-      sheetMusic: state.uploadedSheetMusicBase64
+      sheetMusic: state.uploadedSheetMusicBase64,
+      createdBy: state.userName || "관리자" // 👈 작성자 실명 연동 태깅!
     };
     week.items.push(newSong);
   }
@@ -2497,9 +2622,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // 6. 로그아웃 버튼 바인딩
   document.getElementById('btn-logout').addEventListener('click', logout);
   
+  // 6.2 오늘의 말씀 묵상 나누기 등록 버튼 바인딩
+  document.getElementById('btn-submit-devotion-post').addEventListener('click', saveDevotionPost);
+  
   // 6.5 메인 대시보드 하단 탭 전환 버튼 바인딩
   document.getElementById('btn-tab-conti').addEventListener('click', () => switchMainTab('conti'));
   document.getElementById('btn-tab-notice').addEventListener('click', () => switchMainTab('notice'));
+  document.getElementById('btn-tab-devotion').addEventListener('click', () => switchMainTab('devotion'));
   document.getElementById('btn-tab-ai').addEventListener('click', () => switchMainTab('ai-rec'));
   
   // 7. 메인화면 찬양팀 이름 수정 버튼 바인딩
@@ -3034,3 +3163,274 @@ function displayAIHelperResults(recommendations) {
   
   resultsBox.style.display = 'flex';
 }
+
+// ==========================================================================
+// [시편 찬양 말씀 묵상 및 일일 출석체크 로직]
+// ==========================================================================
+const PSALM_VERSES = [
+  { verse: "시편 150:6", content: "호흡이 있는 자마다 여호와를 찬양할지어다 할렐루야" },
+  { verse: "시편 100:4", content: "감사함으로 그의 문에 들어가며 찬송함으로 그의 궁정에 들어가서 그에게 감사하며 그의 이름을 송축할지어다" },
+  { verse: "시편 57:7", content: "하나님이여 내 마음이 확정되었고 내 마음이 확정되었사오니 내가 노래하고 내가 찬송하리이다" },
+  { verse: "시편 95:1", content: "오라 우리가 여호와께 노래하며 우리의 구원의 반석을 향하여 즐거이 외치자" },
+  { verse: "시편 33:3", content: "새 노래로 그를 노래하며 즐거운 소리로 아름답게 연주할지어다" },
+  { verse: "시편 104:33", content: "내가 평생토록 여호와께 노래하며 내가 살아 있는 동안 내 하나님을 찬양하리로다" },
+  { verse: "시편 147:1", content: "할렐루야 우리 하나님을 찬양하는 일이 선함이여 찬송하는 일이 아름답고 마땅하도다" }
+];
+
+// 오늘의 말씀 탭 렌더링
+function renderDevotionTab() {
+  const church = db.churches[db.activeChurchId];
+  if (!church) return;
+  
+  if (!church.attendances) church.attendances = {};
+  if (!church.devotions) church.devotions = {};
+  
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const date = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${date}`;
+  
+  if (!church.devotions[todayStr]) {
+    church.devotions[todayStr] = { posts: [] };
+  }
+  
+  // 1. 오늘의 시편 말씀 출력
+  const verseIndex = today.getDate() % PSALM_VERSES.length;
+  const todayVerse = PSALM_VERSES[verseIndex];
+  
+  document.getElementById('daily-verse-title').textContent = todayVerse.verse;
+  document.getElementById('daily-verse-content').textContent = `“${todayVerse.content}”`;
+  
+  // 2. 본인의 묵상 참여 양식 제어 (이미 썼다면 작성창 숨김)
+  const posts = church.devotions[todayStr].posts || [];
+  const hasWritten = posts.some(post => post.authorName === state.userName);
+  
+  const formBox = document.getElementById('my-devotion-form-box');
+  const completeMsg = document.getElementById('my-devotion-complete-msg');
+  
+  if (hasWritten) {
+    formBox.style.display = 'none';
+    completeMsg.style.display = 'block';
+  } else {
+    formBox.style.display = 'block';
+    completeMsg.style.display = 'none';
+    document.getElementById('devotion-post-input').value = '';
+  }
+  
+  // 3. 관리자 전용 실시간 출석 현황판 노출
+  const adminBox = document.getElementById('admin-attendance-box');
+  const listContainer = document.getElementById('attendance-list-container');
+  const todayAttendance = church.attendances[todayStr] || {};
+  
+  if (db.activeRole === 'admin') {
+    adminBox.style.display = 'block';
+    listContainer.innerHTML = '';
+    
+    const attendPeople = Object.keys(todayAttendance);
+    document.getElementById('attendance-count-badge').textContent = `${attendPeople.length}명`;
+    
+    if (attendPeople.length === 0) {
+      listContainer.innerHTML = `<span style="font-size: 0.72rem; color: var(--text-muted); font-style: italic;">오늘 아직 출석체크를 완료한 팀원이 없습니다.</span>`;
+    } else {
+      attendPeople.forEach(name => {
+        const time = todayAttendance[name];
+        const badge = document.createElement('span');
+        badge.style.cssText = `
+          background: rgba(16, 185, 129, 0.07);
+          border: 1px solid rgba(16, 185, 129, 0.18);
+          color: #059669;
+          padding: 3px 8px;
+          border-radius: var(--radius-sm);
+          font-size: 0.72rem;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+        `;
+        badge.innerHTML = `<i class="fa-solid fa-user-check" style="font-size: 0.65rem;"></i> ${escapeHtml(name)} (${time})`;
+        listContainer.appendChild(badge);
+      });
+    }
+  } else {
+    adminBox.style.display = 'none';
+  }
+  
+  // 4. 실시간 묵상 피드 & 댓글 게시판 출력
+  const feedContainer = document.getElementById('devotion-feed-container');
+  feedContainer.innerHTML = '';
+  
+  if (posts.length === 0) {
+    feedContainer.innerHTML = `
+      <div class="empty-state" style="padding: 24px 10px; background: rgba(255,255,255,0.7); border: 1px dashed var(--border); border-radius: var(--radius-md);">
+        <i class="fa-regular fa-comments empty-icon" style="color: #a5b4fc; font-size: 1.8rem; margin-bottom: 6px;"></i>
+        <p style="font-size: 0.8125rem; font-weight: 700; color: var(--text-sub);">오늘 나눈 묵상이 아직 없습니다.</p>
+        <p class="empty-sub" style="font-size: 0.72rem;">첫 묵상글을 등록하여 찬양팀원들과 은혜를 나누어 보세요!</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // 최신 글이 위로 오도록 정렬
+  const reversedPosts = [...posts].reverse();
+  
+  reversedPosts.forEach(post => {
+    const card = document.createElement('div');
+    card.className = 'notice-card';
+    card.style.cssText = `
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    `;
+    
+    // 댓글 목록 빌드
+    const commentsList = post.comments || [];
+    let commentsHtml = '';
+    
+    if (commentsList.length > 0) {
+      commentsHtml = `
+        <div class="comments-box" style="margin-top: 6px; background: var(--bg-main); border-radius: var(--radius-sm); padding: 8px 10px; border: 1px solid rgba(229,231,235,0.5); display: flex; flex-direction: column; gap: 6px;">
+          ${commentsList.map(cmt => `
+            <div style="font-size: 0.75rem; line-height: 1.4; border-bottom: 1px dashed rgba(0,0,0,0.03); padding-bottom: 4px; margin-bottom: 2px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                <span style="font-weight: 700; color: var(--text-sub); font-size: 0.72rem;">${escapeHtml(cmt.authorName)}</span>
+                <span style="font-size: 0.625rem; color: var(--text-muted);">${cmt.time}</span>
+              </div>
+              <div style="color: var(--text-main); font-weight: 500; padding-left: 2px;">${escapeHtml(cmt.content)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+    
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 0.78rem; font-weight: 700; color: #4f46e5; background: rgba(99,102,241,0.08); padding: 2px 7px; border-radius: var(--radius-sm); border: 1px solid rgba(99,102,241,0.15); display: inline-flex; align-items: center; gap: 3px;">
+            <i class="fa-regular fa-user" style="font-size: 0.65rem;"></i> ${escapeHtml(post.authorName)}
+          </span>
+          <span style="font-size: 0.65rem; background: #10b981; color: #fff; padding: 1px 5px; border-radius: 8px; font-weight: 700;">출석완료</span>
+        </div>
+        <span style="font-size: 0.6875rem; color: var(--text-muted); font-weight: 500;"><i class="fa-regular fa-clock"></i> ${post.time}</span>
+      </div>
+      
+      <p style="font-size: 0.8125rem; font-weight: 500; color: var(--text-main); line-height: 1.55; white-space: pre-wrap; margin: 0; padding: 4px 0;">${escapeHtml(post.content)}</p>
+      
+      <!-- 댓글 목록 영역 -->
+      ${commentsHtml}
+      
+      <!-- 댓글 입력창 -->
+      <div style="display: flex; gap: 6px; margin-top: 4px; align-items: center;">
+        <input type="text" id="comment-input-${post.id}" placeholder="따뜻한 댓글을 남겨보세요..." style="flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.75rem; outline: none; background: #ffffff; transition: border-color 0.2s;" onfocus="this.style.borderColor='#818cf8';" onblur="this.style.borderColor='var(--border)';">
+        <button type="button" onclick="saveDevotionComment('${post.id}')" style="background: #6366f1; border: none; color: #fff; width: 30px; height: 30px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#4f46e5';" onmouseout="this.style.backgroundColor='#6366f1';">
+          <i class="fa-solid fa-paper-plane" style="font-size: 0.72rem;"></i>
+        </button>
+      </div>
+    `;
+    
+    feedContainer.appendChild(card);
+  });
+}
+
+// 묵상글 신규 등록 (동시 출석 완료 처리)
+function saveDevotionPost() {
+  const church = db.churches[db.activeChurchId];
+  if (!church) return;
+  
+  if (!state.userName) {
+    alert('사용자 이름을 식별할 수 없습니다. 로그아웃 후 실명으로 재로그인해 주세요.');
+    return;
+  }
+  
+  const textVal = document.getElementById('devotion-post-input').value.trim();
+  if (!textVal) {
+    alert('느낀 점이나 묵상 내용을 기입해 주세요!');
+    return;
+  }
+  
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const date = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${date}`;
+  
+  const timeStr = today.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  
+  if (!church.devotions) church.devotions = {};
+  if (!church.devotions[todayStr]) church.devotions[todayStr] = { posts: [] };
+  
+  // 1. 묵상글 배열에 저장
+  const newPost = {
+    id: 'post-' + Date.now(),
+    authorName: state.userName,
+    content: textVal,
+    time: timeStr,
+    comments: []
+  };
+  church.devotions[todayStr].posts.push(newPost);
+  
+  // 2. 출석부 자동 연동 체크
+  if (!church.attendances) church.attendances = {};
+  if (!church.attendances[todayStr]) church.attendances[todayStr] = {};
+  
+  church.attendances[todayStr][state.userName] = timeStr;
+  
+  saveDatabase();
+  
+  // UI 즉시 동기화
+  renderDevotionTab();
+  alert('샬롬! 오늘의 말씀 묵상 나눔과 출석체크가 모두 완료되었습니다. 🌟');
+}
+
+// 묵상글에 댓글 전송 등록
+function saveDevotionComment(postId) {
+  const church = db.churches[db.activeChurchId];
+  if (!church) return;
+  
+  if (!state.userName) {
+    alert('사용자 이름을 식별할 수 없습니다. 로그아웃 후 실명으로 재로그인해 주세요.');
+    return;
+  }
+  
+  const inputEl = document.getElementById(`comment-input-${postId}`);
+  if (!inputEl) return;
+  
+  const commentVal = inputEl.value.trim();
+  if (!commentVal) {
+    alert('댓글 내용을 입력하세요!');
+    return;
+  }
+  
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const date = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${date}`;
+  
+  const timeStr = today.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  
+  const posts = church.devotions[todayStr]?.posts || [];
+  const post = posts.find(p => p.id === postId);
+  
+  if (post) {
+    if (!post.comments) post.comments = [];
+    
+    post.comments.push({
+      id: 'comment-' + Date.now(),
+      authorName: state.userName,
+      content: commentVal,
+      time: timeStr
+    });
+    
+    saveDatabase();
+    renderDevotionTab();
+  }
+}
+
+// 인라인 onclick의 원활한 동적 바인딩을 위해 전역 스코프 맵핑
+window.saveDevotionComment = saveDevotionComment;
