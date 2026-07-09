@@ -32,11 +32,7 @@
     <!-- 모바일 기기 목업 프레임 -->
     <div class="phone-frame">
       <div class="phone-screen">
-        <!-- [NEW] [0] 어플 진입 인트로 스플래시 화면 (모바일 프레임 내부 격리) -->
-        <div id="splash-screen" class="splash-screen">
-          <video id="splash-video" src="intro.mp4" muted autoplay playsinline></video>
-          <button id="btn-skip-splash" class="btn-skip-splash">Skip <i class="fa-solid fa-chevron-right"></i></button>
-        </div>
+        <!-- 인트로 스플래시 화면 제거 완료 -->
         
         <!-- [1] 로그인 / 교회 가입 화면 (최초 화면) -->
         <div id="screen-auth" class="screen active">
@@ -216,70 +212,7 @@
               </div>
             </div>
 
-            <!-- [NEW] [C-3] 설정 및 어플 업데이트 정보 탭 영역 (모든 팀원 공용 및 최고 관리자 전용 인증) -->
-            <div id="area-main-setting" class="tab-area" style="padding-bottom: 24px;">
-              <h3 style="display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 4px 0 14px 0;">
-                <i class="fa-solid fa-gear" style="color: #6366f1;"></i> 어플리케이션 설정
-              </h3>
-
-              <!-- 버전 및 업데이트 히스토리 카드 -->
-              <div class="setting-card" style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 8px;">
-                  <span style="font-size: 0.8125rem; font-weight: 700; color: var(--text-main);"><i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> 어플리케이션 정보</span>
-                  <span style="font-size: 0.72rem; font-weight: 800; background: rgba(99, 102, 241, 0.08); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.18); padding: 1px 6px; border-radius: 4px;">v3.7.0 (Stable)</span>
-                </div>
-                <div style="font-size: 0.75rem; color: var(--text-sub); line-height: 1.6;">
-                  <strong>최신 업데이트 내역:</strong>
-                  <ul style="margin: 4px 0 0 0; padding-left: 14px; display: flex; flex-direction: column; gap: 4px;">
-                    <li>🔍 실시간 찬양 부분 검색 시스템 공식 신설 (300ms 디바운스)</li>
-                    <li>📺 앱 내부 유튜브 16:9 반응형 비디오 오버레이 플레이어 통합</li>
-                    <li>💬 묵상 나눔 피드 댓글 간소화 및 관리자용 피드 삭제 기능 도입</li>
-                    <li>🔒 인트로 스플래시 화면 둥근 모서리 격리 및 터치 인스턴트 패스 적용</li>
-                    <li>⚙️ 독립 탭 네비게이션 최적화 및 깃허브 보안 락 우회 완료</li>
-                  </ul>
-                </div>
-              </div>
-
-              <!-- 최고 관리자(Super Admin) 로그인 & 대시보드 공간 -->
-              <div id="super-admin-section" style="background: #ffffff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; box-shadow: var(--shadow-sm);">
-                
-                <!-- 로그인 폼 (인증 전 노출) -->
-                <div id="super-login-form-box" style="display: block;">
-                  <h4 style="margin: 0 0 10px 0; font-size: 0.8125rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 5px;">
-                    <i class="fa-solid fa-shield-halved" style="color: #ef4444;"></i> 최고 관리자(Super Admin) 로그인
-                  </h4>
-                  <p style="font-size: 0.6875rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
-                    전역 등록 교회를 모니터링하고 가짜/유해 교회를 원격 삭제할 수 있는 마스터 모드입니다.
-                  </p>
-                  <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <input type="text" id="super-id-input" placeholder="최고 관리자 ID" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.78rem; outline: none;">
-                    <input type="password" id="super-pw-input" placeholder="비밀번호" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.78rem; outline: none;">
-                    <button type="button" id="btn-super-login" class="btn-primary" style="width: 100%; padding: 10px; background: #ef4444; border: none; font-weight: 700; color: #fff; border-radius: var(--radius-sm);">
-                      <i class="fa-solid fa-lock-open"></i> 최고 관리자 로그인
-                    </button>
-                  </div>
-                </div>
-
-                <!-- 마스터 대시보드 패널 (인증 성공 후 노출) -->
-                <div id="super-dashboard-box" style="display: none;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 8px; margin-bottom: 12px;">
-                    <h4 style="margin: 0; font-size: 0.8125rem; font-weight: 700; color: #ef4444; display: flex; align-items: center; gap: 5px;">
-                      <i class="fa-solid fa-mask" style="color: #ef4444;"></i> 전역 교회 마스터 패널
-                    </h4>
-                    <button type="button" id="btn-super-logout" style="background: none; border: none; font-size: 0.6875rem; font-weight: 700; color: var(--text-sub); cursor: pointer; text-decoration: underline; padding: 0;">로그아웃</button>
-                  </div>
-                  <p style="font-size: 0.6875rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
-                    🚨 <strong>주의:</strong> 교회 삭제 시 해당 교회의 주차 콘티, 공지사항, 묵상 등 모든 클라우드 데이터가 영구 복구 불가로 삭제됩니다.
-                  </p>
-                  
-                  <!-- 전역 등록 교회 리스트 컨테이너 -->
-                  <div id="super-church-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 2px;">
-                    <!-- JS로 동적 주입 -->
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            <!-- 설정 탭 영역 삭제 완료 -->
           </main>
           
           <!-- 하단 고정 네비게이션 탭바 -->
@@ -300,10 +233,7 @@
               <i class="fa-solid fa-magnifying-glass"></i>
               <span>찬양검색</span>
             </button>
-            <button id="btn-tab-setting" class="tab-item">
-              <i class="fa-solid fa-gear"></i>
-              <span>설정</span>
-            </button>
+            <!-- 설정 버튼 삭제 -->
           </nav>
           
           <!-- 관리자용: 메인화면 하단 플로팅 바 (탭 선택에 따라 내부 버튼 조절) -->
@@ -706,10 +636,10 @@
   <!-- [NEW] 앱 공용 하단 플로팅 토스트 메시지 -->
   <div id="toast-container" class="toast-message">콘티에 추가되었습니다.</div>
 
-  <!-- Firebase SDK Compat CDN (실시간 동기화 클라우드 시스템) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <!-- Firebase SDK Compat CDN (실시간 동기화 클라우드 시스템 - 비차단 비동기 defer 로드) -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
-  <script src="app.js?v=3.7.4"></script>
+  <script defer src="app.js?v=3.8.2"></script>
 </body>
 </html>

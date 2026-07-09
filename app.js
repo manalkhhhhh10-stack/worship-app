@@ -12,8 +12,7 @@ const state = {
   uploadedTeamLogoBase64: null,  // 파일 업로드 시 임시로 보관할 로고 이미지 Base64
   aiCache: {},                  // AI 찬양 추천 결과 임시 인메모리 캐시 (속도 향상 마스터키)
   isLocalWriting: false,        // 로컬 데이터 저장 중 클라우드 롤백 충돌을 방지하는 동기화 락(Lock)
-  userName: "",                 // 현재 로그인한 사용자의 실명
-  isSuperAdmin: false           // 전역 마스터 최고 관리자 인증 상태 여부
+  userName: ""                  // 현재 로그인한 사용자의 실명
 };
 
 // 텅 빈 예배 데이터 구조 생성 템플릿 (사용자가 처음부터 직접 예배를 등록해서 사용하도록 텅 빈 구조 지원)
@@ -923,13 +922,11 @@ function switchMainTab(tabName) {
   const btnNotice = document.getElementById('btn-tab-notice');
   const btnDevotion = document.getElementById('btn-tab-devotion');
   const btnSearch = document.getElementById('btn-tab-search');
-  const btnSetting = document.getElementById('btn-tab-setting');
   
   const areaConti = document.getElementById('area-main-conti');
   const areaNotice = document.getElementById('area-main-notice');
   const areaDevotion = document.getElementById('area-main-devotion');
   const areaSearch = document.getElementById('area-main-search');
-  const areaSetting = document.getElementById('area-main-setting');
   
   const btnAddWorship = document.getElementById('btn-add-worship');
   const btnAddNotice = document.getElementById('btn-add-notice');
@@ -938,13 +935,11 @@ function switchMainTab(tabName) {
   btnNotice.classList.remove('active');
   if (btnDevotion) btnDevotion.classList.remove('active');
   if (btnSearch) btnSearch.classList.remove('active');
-  if (btnSetting) btnSetting.classList.remove('active');
   
   areaConti.classList.remove('active');
   areaNotice.classList.remove('active');
   if (areaDevotion) areaDevotion.classList.remove('active');
   if (areaSearch) areaSearch.classList.remove('active');
-  if (areaSetting) areaSetting.classList.remove('active');
   
   if (tabName === 'conti') {
     btnConti.classList.add('active');
@@ -980,24 +975,6 @@ function switchMainTab(tabName) {
     btnAddNotice.style.display = 'none';
     
     performPraiseSearch(); // 검색 패널 활성화 시 리프레시 실행
-  } else if (tabName === 'setting') {
-    if (btnSetting) btnSetting.classList.add('active');
-    if (areaSetting) areaSetting.classList.add('active');
-    
-    btnAddWorship.style.display = 'none';
-    btnAddNotice.style.display = 'none';
-    
-    // 최고 관리자 상태에 따른 대시보드 뷰 씽크
-    const loginBox = document.getElementById('super-login-form-box');
-    const dashboardBox = document.getElementById('super-dashboard-box');
-    if (state.isSuperAdmin) {
-      if (loginBox) loginBox.style.display = 'none';
-      if (dashboardBox) dashboardBox.style.display = 'block';
-      renderSuperChurchList();
-    } else {
-      if (loginBox) loginBox.style.display = 'block';
-      if (dashboardBox) dashboardBox.style.display = 'none';
-    }
   }
 }
 
@@ -2747,46 +2724,7 @@ function initDragAndDrop() {
 // ==========================================================================
 function initializeApp() {
   
-  // [NEW] 0. 인트로 스플래시 화면 비디오 제어 및 자동 해제
-  const splashScreen = document.getElementById('splash-screen');
-  const splashVideo = document.getElementById('splash-video');
-  const skipBtn = document.getElementById('btn-skip-splash');
-
-  function hideSplash() {
-    if (splashScreen && !splashScreen.classList.contains('fade-out')) {
-      splashScreen.classList.add('fade-out');
-      // 비디오 정지 처리
-      if (splashVideo) {
-        splashVideo.pause();
-      }
-      // 0.4초 뒤 완전 제거
-      setTimeout(() => {
-        splashScreen.style.display = 'none';
-      }, 400);
-    }
-  }
-
-  if (splashScreen && splashVideo) {
-    // 모바일 브라우저 강제 재생 시작 시도
-    splashVideo.play().catch(err => {
-      console.warn("Autoplay was blocked by browser policy. User gesture needed:", err);
-    });
-
-    // 4.5초 뒤 자동 페이드 아웃 강제 해제 (인트로 영상이 3~4초 분량이므로 넉넉히 대기)
-    const splashTimeout = setTimeout(hideSplash, 4500);
-
-    // 비디오 재생이 1.8초보다 일찍 끝나면 즉시 퇴장
-    splashVideo.addEventListener('ended', () => {
-      clearTimeout(splashTimeout);
-      hideSplash();
-    });
-
-    // 스플래시 화면 전체 영역 클릭 시 즉시 건너뛰기
-    splashScreen.addEventListener('click', () => {
-      clearTimeout(splashTimeout);
-      hideSplash();
-    });
-  }
+  // 인트로 스플래시 화면 제어 로직 삭제 완료
   
   // 1. 데이터베이스 및 세션 확인
   initDatabase();
@@ -3047,19 +2985,7 @@ function initializeApp() {
     btnTabSearch.addEventListener('click', () => switchMainTab('praise-search'));
   }
 
-  // 29. [NEW] 설정 및 최고 관리자 바인딩
-  const btnTabSetting = document.getElementById('btn-tab-setting');
-  if (btnTabSetting) {
-    btnTabSetting.addEventListener('click', () => switchMainTab('setting'));
-  }
-  const btnSuperLogin = document.getElementById('btn-super-login');
-  if (btnSuperLogin) {
-    btnSuperLogin.addEventListener('click', handleSuperLogin);
-  }
-  const btnSuperLogout = document.getElementById('btn-super-logout');
-  if (btnSuperLogout) {
-    btnSuperLogout.addEventListener('click', handleSuperLogout);
-  }
+  // 설정 및 최고 관리자 바인딩 삭제 완료
   
   // 전역 클릭 시 자동완성 드롭다운 바깥을 누르면 닫기
   document.addEventListener('click', (e) => {
@@ -3525,121 +3451,8 @@ function deleteDevotionPost(postId) {
   }
 }
 
-// 최고 관리자(Super Admin) 로그인 처리 함수
-function handleSuperLogin() {
-  const idVal = document.getElementById('super-id-input').value.trim();
-  const pwVal = document.getElementById('super-pw-input').value.trim();
-  
-  if (idVal === 'manalkh' && pwVal === '9570') {
-    state.isSuperAdmin = true;
-    document.getElementById('super-id-input').value = '';
-    document.getElementById('super-pw-input').value = '';
-    
-    // UI 전환
-    document.getElementById('super-login-form-box').style.display = 'none';
-    document.getElementById('super-dashboard-box').style.display = 'block';
-    
-    renderSuperChurchList();
-    showToast("최고 관리자로 로그인했습니다.");
-  } else {
-    alert('최고 관리자 인증에 실패했습니다. 아이디 또는 비밀번호를 확인해 주세요.');
-  }
-}
-
-// 최고 관리자 로그아웃 처리 함수
-function handleSuperLogout() {
-  state.isSuperAdmin = false;
-  document.getElementById('super-login-form-box').style.display = 'block';
-  document.getElementById('super-dashboard-box').style.display = 'none';
-  showToast("최고 관리자 로그아웃 완료.");
-}
-
-// 최고 관리자: 전체 교회 목록 렌더링 함수
-function renderSuperChurchList() {
-  const listContainer = document.getElementById('super-church-list');
-  if (!listContainer) return;
-  listContainer.innerHTML = '<span style="font-size:0.75rem; color:var(--text-muted); padding: 10px 0;">교회 리스트 불러오는 중...</span>';
-  
-  fbDB.ref('churches').once('value').then(snapshot => {
-    const churches = snapshot.val() || {};
-    listContainer.innerHTML = '';
-    
-    const keys = Object.keys(churches);
-    if (keys.length === 0) {
-      listContainer.innerHTML = '<span style="font-size:0.72rem; color:var(--text-muted); font-style:italic; padding: 10px 0;">등록된 교회가 없습니다.</span>';
-      return;
-    }
-    
-    keys.forEach(key => {
-      const church = churches[key];
-      const item = document.createElement('div');
-      item.style.cssText = `
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #f9fafb;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 8px 10px;
-        margin-bottom: 6px;
-        box-shadow: var(--shadow-xs);
-      `;
-      
-      item.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 2px; max-width: 70%;">
-          <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">${escapeHtml(church.name)}</span>
-          <span style="font-size: 0.65rem; color: var(--text-muted);">${escapeHtml(church.teamName || '찬양팀')} (ID: ${key})</span>
-          <span style="font-size: 0.65rem; color: #4f46e5; font-weight: 600;">비번: 팀원(${escapeHtml(church.memberPassword)}) / 관리자(${escapeHtml(church.adminPassword)})</span>
-        </div>
-        <button type="button" onclick="deleteChurch('${key}', '${escapeHtml(church.name.replace(/'/g, "\\'"))}')" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.18); color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 0.6875rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">교회 삭제</button>
-      `;
-      listContainer.appendChild(item);
-    });
-  }).catch(err => {
-    listContainer.innerHTML = `<span style="font-size:0.72rem; color:#ef4444; padding: 10px 0;">목록 조회 오류: ${err.message}</span>`;
-  });
-}
-
-// 최고 관리자: 특정 교회 원격 영구 삭제 함수
-function deleteChurch(churchId, churchName) {
-  if (!confirm(`🚨 [경고] 정말로 "${churchName}" 교회를 영구 삭제하시겠습니까?\n이 교회의 모든 콘티, 묵상, 공지 등 모든 클라우드 데이터가 통째로 삭제되며 복구할 수 없습니다.`)) return;
-  
-  const performDelete = () => {
-    // 로컬 메모리에서도 정리
-    if (db && db.churches && db.churches[churchId]) {
-      delete db.churches[churchId];
-      if (db.activeChurchId === churchId) {
-        db.activeChurchId = null;
-        db.activeRole = 'member';
-      }
-      saveDatabase();
-    }
-    
-    renderSuperChurchList();
-    showToast(`"${churchName}" 교회가 성공적으로 삭제되었습니다.`);
-    
-    // 만약 현재 삭제된 교회 세션으로 로그인해 있었던 상태라면 세션을 풀고 로그인 화면으로 보냄
-    if (db.activeChurchId === null) {
-      alert('현재 로그인된 교회가 최고 관리자에 의해 삭제되어 로그아웃 처리됩니다.');
-      location.reload();
-    }
-  };
-
-  if (fbDB) {
-    // Firebase 원격 데이터베이스 노드 제거
-    fbDB.ref(`churches/${churchId}`).remove().then(() => {
-      performDelete();
-    }).catch(err => {
-      alert('교회 삭제 실패: ' + err.message);
-    });
-  } else {
-    performDelete();
-  }
-}
-
 // 전역 스코프 인라인 바인딩 맵핑
 window.openYoutubePlayer = openYoutubePlayer;
 window.closeYoutubePlayer = closeYoutubePlayer;
 window.addPraiseToCurrentConti = addPraiseToCurrentConti;
 window.deleteDevotionPost = deleteDevotionPost;
-window.deleteChurch = deleteChurch;
