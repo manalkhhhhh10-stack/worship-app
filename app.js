@@ -12,7 +12,8 @@ const state = {
   uploadedTeamLogoBase64: null,  // 파일 업로드 시 임시로 보관할 로고 이미지 Base64
   aiCache: {},                  // AI 찬양 추천 결과 임시 인메모리 캐시 (속도 향상 마스터키)
   isLocalWriting: false,        // 로컬 데이터 저장 중 클라우드 롤백 충돌을 방지하는 동기화 락(Lock)
-  userName: ""                  // 현재 로그인한 사용자의 실명
+  userName: "",                 // 현재 로그인한 사용자의 실명
+  isSuperAdmin: false           // 전역 마스터 최고 관리자 인증 상태 여부
 };
 
 // 텅 빈 예배 데이터 구조 생성 템플릿 (사용자가 처음부터 직접 예배를 등록해서 사용하도록 텅 빈 구조 지원)
@@ -287,15 +288,25 @@ const firebaseConfig = {
   appId: "1:476067828236:web:5dff885f8938843dc69429",
   measurementId: "G-DKWB3F98Y2"
 };
-firebase.initializeApp(firebaseConfig);
-const fbDB = firebase.database();
+
+let fbDB = null;
+if (typeof firebase !== 'undefined') {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    fbDB = firebase.database();
+  } catch (err) {
+    console.warn("Firebase initialize failed:", err);
+  }
+} else {
+  console.warn("Firebase SDK is not loaded. App will run in completely offline local mode.");
+}
 
 let db = null;
 let activeSyncListener = null;
 
 // Firebase 클라우드 DB 실시간 리스너 작동 (팀원 간 0.1초 실시간 콘티 씽크 동기화)
 function startCloudSync(churchId) {
-  if (!churchId) return;
+  if (!churchId || !fbDB) return;
   if (activeSyncListener) {
     fbDB.ref(`churches/${churchId}`).off('value', activeSyncListener);
   }
@@ -381,20 +392,24 @@ async function initDatabase() {
 
   // Firebase 실시간 동기화 및 마이그레이션 개시
   try {
-    const snapshot = await fbDB.ref('churches').once('value');
-    const cloudChurches = snapshot.val();
-    // 클라우드 데이터 무결성 검증 (깨진 데이터 오버라이트 방지)
-    if (cloudChurches && typeof cloudChurches === 'object' && Object.keys(cloudChurches).length > 0) {
-      if (cloudChurches['church-1'] && cloudChurches['church-1'].worships) {
-        db.churches = cloudChurches;
-        console.log("Firebase cloud database synced successfully.");
+    if (fbDB) {
+      const snapshot = await fbDB.ref('churches').once('value');
+      const cloudChurches = snapshot.val();
+      // 클라우드 데이터 무결성 검증 (깨진 데이터 오버라이트 방지)
+      if (cloudChurches && typeof cloudChurches === 'object' && Object.keys(cloudChurches).length > 0) {
+        if (cloudChurches['church-1'] && cloudChurches['church-1'].worships) {
+          db.churches = cloudChurches;
+          console.log("Firebase cloud database synced successfully.");
+        } else {
+          console.warn("Firebase data is corrupted. Re-publishing local clean database to cloud...");
+          await fbDB.ref('churches').set(db.churches);
+        }
       } else {
-        console.warn("Firebase data is corrupted. Re-publishing local clean database to cloud...");
+        console.log("Firebase is empty. Migrating local database to Firebase cloud...");
         await fbDB.ref('churches').set(db.churches);
       }
     } else {
-      console.log("Firebase is empty. Migrating local database to Firebase cloud...");
-      await fbDB.ref('churches').set(db.churches);
+      console.warn("fbDB is null, running in offline mode.");
     }
   } catch (fbErr) {
     console.warn("Firebase sync failed, starting in offline local cache mode:", fbErr);
@@ -593,24 +608,26 @@ function saveDatabase() {
     console.warn("로컬 백업 캐시 용량이 초과되었으나, 클라우드 실시간 저장을 강제 계속 진행합니다:", storageErr);
   }
   
-  // 클라우드 동기화 락 작동
-  state.isLocalWriting = true;
-  
-  const syncPromise = db.activeChurchId
-    ? fbDB.ref(`churches/${db.activeChurchId}`).set(db.churches[db.activeChurchId])
-    : fbDB.ref('churches').set(db.churches);
+  // 클라우드 동기화 락 작동 (Firebase 활성화 상태에서만 실행)
+  if (fbDB) {
+    state.isLocalWriting = true;
     
-  syncPromise
-    .then(() => {
-      // 0.8초의 네트워크 마진을 두고 동기화 락 안전 해제
-      setTimeout(() => { state.isLocalWriting = false; }, 800);
-    })
-    .catch(err => {
-      console.error("Firebase sync error: ", err);
-      // 저장 실패 원인(권한 거부 등)을 상세히 얼럿창으로 피드백 유도
-      alert(`[클라우드 동기화 실패]\n구글 데이터베이스 전송 도중 에러가 발생했습니다:\n${err.message}\n\n(주로 Firebase 규칙 설정 문제인 경우가 많습니다.)`);
-      setTimeout(() => { state.isLocalWriting = false; }, 800);
-    });
+    const syncPromise = db.activeChurchId
+      ? fbDB.ref(`churches/${db.activeChurchId}`).set(db.churches[db.activeChurchId])
+      : fbDB.ref('churches').set(db.churches);
+      
+    syncPromise
+      .then(() => {
+        // 0.8초의 네트워크 마진을 두고 동기화 락 안전 해제
+        setTimeout(() => { state.isLocalWriting = false; }, 800);
+      })
+      .catch(err => {
+        console.error("Firebase sync error: ", err);
+        // 저장 실패 원인(권한 거부 등)을 상세히 얼럿창으로 피드백 유도
+        alert(`[클라우드 동기화 실패]\n구글 데이터베이스 전송 도중 에러가 발생했습니다:\n${err.message}\n\n(주로 Firebase 규칙 설정 문제인 경우가 많습니다.)`);
+        setTimeout(() => { state.isLocalWriting = false; }, 800);
+      });
+  }
 }
 
 // ==========================================================================
@@ -830,15 +847,11 @@ function setSessionAndEnter(churchId, role) {
     badgeSub.classList.remove('member');
     badgeHistory.classList.remove('member');
     badgeDetail.classList.remove('member');
-    const btnAI = document.getElementById('btn-tab-ai');
-    if (btnAI) btnAI.style.display = 'flex';
   } else {
     badgeMain.classList.add('member');
     badgeSub.classList.add('member');
     badgeHistory.classList.add('member');
     badgeDetail.classList.add('member');
-    const btnAI = document.getElementById('btn-tab-ai');
-    if (btnAI) btnAI.style.display = 'none';
   }
   
   const church = db.churches[churchId];
@@ -872,7 +885,7 @@ function setSessionAndEnter(churchId, role) {
 
 // 로그아웃
 function logout() {
-  if (db.activeChurchId && activeSyncListener) {
+  if (db.activeChurchId && activeSyncListener && fbDB) {
     fbDB.ref(`churches/${db.activeChurchId}`).off('value', activeSyncListener);
     activeSyncListener = null;
   }
@@ -910,13 +923,13 @@ function switchMainTab(tabName) {
   const btnNotice = document.getElementById('btn-tab-notice');
   const btnDevotion = document.getElementById('btn-tab-devotion');
   const btnSearch = document.getElementById('btn-tab-search');
-  const btnAI = document.getElementById('btn-tab-ai');
+  const btnSetting = document.getElementById('btn-tab-setting');
   
   const areaConti = document.getElementById('area-main-conti');
   const areaNotice = document.getElementById('area-main-notice');
   const areaDevotion = document.getElementById('area-main-devotion');
   const areaSearch = document.getElementById('area-main-search');
-  const areaAI = document.getElementById('area-main-ai');
+  const areaSetting = document.getElementById('area-main-setting');
   
   const btnAddWorship = document.getElementById('btn-add-worship');
   const btnAddNotice = document.getElementById('btn-add-notice');
@@ -925,13 +938,13 @@ function switchMainTab(tabName) {
   btnNotice.classList.remove('active');
   if (btnDevotion) btnDevotion.classList.remove('active');
   if (btnSearch) btnSearch.classList.remove('active');
-  btnAI.classList.remove('active');
+  if (btnSetting) btnSetting.classList.remove('active');
   
   areaConti.classList.remove('active');
   areaNotice.classList.remove('active');
   if (areaDevotion) areaDevotion.classList.remove('active');
   if (areaSearch) areaSearch.classList.remove('active');
-  areaAI.classList.remove('active');
+  if (areaSetting) areaSetting.classList.remove('active');
   
   if (tabName === 'conti') {
     btnConti.classList.add('active');
@@ -967,13 +980,24 @@ function switchMainTab(tabName) {
     btnAddNotice.style.display = 'none';
     
     performPraiseSearch(); // 검색 패널 활성화 시 리프레시 실행
-  } else if (tabName === 'ai-rec') {
-    btnAI.classList.add('active');
-    areaAI.classList.add('active');
+  } else if (tabName === 'setting') {
+    if (btnSetting) btnSetting.classList.add('active');
+    if (areaSetting) areaSetting.classList.add('active');
     
-    // AI 탭에서는 하단 추가바를 숨김 (탭바만 유지)
     btnAddWorship.style.display = 'none';
     btnAddNotice.style.display = 'none';
+    
+    // 최고 관리자 상태에 따른 대시보드 뷰 씽크
+    const loginBox = document.getElementById('super-login-form-box');
+    const dashboardBox = document.getElementById('super-dashboard-box');
+    if (state.isSuperAdmin) {
+      if (loginBox) loginBox.style.display = 'none';
+      if (dashboardBox) dashboardBox.style.display = 'block';
+      renderSuperChurchList();
+    } else {
+      if (loginBox) loginBox.style.display = 'block';
+      if (dashboardBox) dashboardBox.style.display = 'none';
+    }
   }
 }
 
@@ -2721,7 +2745,7 @@ function initDragAndDrop() {
 // ==========================================================================
 // [이벤트 리스너 및 돔 로드 핸들러]
 // ==========================================================================
-document.addEventListener('DOMContentLoaded', () => {
+function initializeApp() {
   
   // [NEW] 0. 인트로 스플래시 화면 비디오 제어 및 자동 해제
   const splashScreen = document.getElementById('splash-screen');
@@ -2791,7 +2815,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-tab-conti').addEventListener('click', () => switchMainTab('conti'));
   document.getElementById('btn-tab-notice').addEventListener('click', () => switchMainTab('notice'));
   document.getElementById('btn-tab-devotion').addEventListener('click', () => switchMainTab('devotion'));
-  document.getElementById('btn-tab-ai').addEventListener('click', () => switchMainTab('ai-rec'));
   
   // 7. 메인화면 찬양팀 이름 수정 버튼 바인딩
   document.getElementById('btn-edit-team-name').addEventListener('click', () => {
@@ -2995,32 +3018,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  // 23. AI 찬양 추천 API 토글 스위치 이벤트 연동
-  document.getElementById('ai-api-toggle').addEventListener('change', (e) => {
-    const keyWrapper = document.getElementById('ai-api-key-wrapper');
-    if (e.target.checked) {
-      keyWrapper.style.display = 'block';
-    } else {
-      keyWrapper.style.display = 'none';
-      document.getElementById('ai-api-key-input').value = '';
-    }
-  });
-  
-  // 25. 추천곡 콘티 추가 모달 제어 바인딩
-  document.getElementById('btn-close-rec-add').addEventListener('click', closeRecAddModal);
-  document.getElementById('btn-cancel-rec-add').addEventListener('click', closeRecAddModal);
-  document.getElementById('rec-add-modal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('rec-add-modal')) {
-      closeRecAddModal();
-    }
-  });
-  document.getElementById('rec-add-form').addEventListener('submit', saveRecAddToLiturgy);
-  
   // 26. 드래그앤드롭 정렬 설정
   initDragAndDrop();
-  
-  // 27. TIKITAKA AI 예배 도우미 폼 제출 및 서브 탭 스위칭 바인딩
-  document.getElementById('ai-helper-form').addEventListener('submit', handleAIHelperRecommendation);
 
   // [NEW] 앱 내부 유튜브 플레이어 모달 개폐 바인딩
   const btnCloseYoutube = document.getElementById('btn-close-youtube-player');
@@ -3047,6 +3046,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnTabSearch) {
     btnTabSearch.addEventListener('click', () => switchMainTab('praise-search'));
   }
+
+  // 29. [NEW] 설정 및 최고 관리자 바인딩
+  const btnTabSetting = document.getElementById('btn-tab-setting');
+  if (btnTabSetting) {
+    btnTabSetting.addEventListener('click', () => switchMainTab('setting'));
+  }
+  const btnSuperLogin = document.getElementById('btn-super-login');
+  if (btnSuperLogin) {
+    btnSuperLogin.addEventListener('click', handleSuperLogin);
+  }
+  const btnSuperLogout = document.getElementById('btn-super-logout');
+  if (btnSuperLogout) {
+    btnSuperLogout.addEventListener('click', handleSuperLogout);
+  }
   
   // 전역 클릭 시 자동완성 드롭다운 바깥을 누르면 닫기
   document.addEventListener('click', (e) => {
@@ -3056,7 +3069,14 @@ document.addEventListener('DOMContentLoaded', () => {
       resultsContainer.classList.remove('active');
     }
   });
-});
+}
+
+// 브라우저의 DOM 로드가 완료된 타이밍 레이스 컨디션을 방지하는 즉시실행 및 리스너 이중 바인딩
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
 
 // ==========================================================================
 // [TIKITAKA BAND AI 예배 도우미 비즈니스 로직]
@@ -3066,305 +3086,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // AI 예배 도우미 추천 폼 제출 처리
 async function handleAIHelperRecommendation(event) {
-  event.preventDefault();
-  
-  const target = document.getElementById('ai-helper-target').value;
-  const sermon = document.getElementById('ai-helper-sermon').value.trim();
-  const bible = document.getElementById('ai-helper-bible').value.trim();
-  const theme = document.getElementById('ai-helper-theme').value.trim();
-  const time = document.getElementById('ai-helper-time').value;
-  const reqKey = document.getElementById('ai-helper-key').value;
-  const wishSong = document.getElementById('ai-helper-wish-song').value.trim();
-  
-  const rawApiKey = document.getElementById('ai-api-key-input').value;
-  const apiKey = rawApiKey ? rawApiKey.replace(/[\s\t\r\n]/g, '') : '';
-  const isRealAI = document.getElementById('ai-api-toggle').checked;
-  
-  const loadingBox = document.getElementById('ai-helper-loading');
-  const resultsBox = document.getElementById('ai-helper-results');
-  const resultsContainer = document.getElementById('ai-helper-results-container');
-  
-  resultsContainer.innerHTML = '';
-  resultsBox.style.display = 'none';
-  loadingBox.style.display = 'flex';
-  
-  try {
-    let recommendations = [];
-    
-    if (isRealAI && apiKey) {
-      try {
-        recommendations = await fetchWorshipHelperRecommendations(apiKey, target, sermon, bible, theme, time, reqKey, wishSong);
-      } catch (apiErr) {
-        console.warn("OpenAI Helper API failed. Falling back to local engine:", apiErr);
-        recommendations = getLocalWorshipHelperRecommendations(target, theme, time, reqKey, wishSong);
-        recommendations._isFallback = true;
-      }
-    } else {
-      // 로컬 디렉터 분석
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      recommendations = getLocalWorshipHelperRecommendations(target, theme, time, reqKey, wishSong);
-    }
-    
-    displayAIHelperResults(recommendations);
-  } catch (err) {
-    alert(err.message);
-  } finally {
-    loadingBox.style.display = 'none';
-  }
-}
-
-// OpenAI API 예배 도우미 추천 통신
-async function fetchWorshipHelperRecommendations(apiKey, target, sermon, bible, theme, time, reqKey, wishSong) {
-  const url = "https://api.openai.com/v1/chat/completions";
-  
-  const songCountMap = { "10분": 2, "15분": 3, "20분": 4, "30분": 5 };
-  const targetCount = songCountMap[time] || 4;
-  
-  const prompt = `
-너는 20년 이상의 경력을 가진 베테랑 예배 인도자이자 찬양 디렉터이다.
-아래 사용자가 입력한 예배 정보를 분석하여, 설교의 주제와 성경 본문 및 감정선에 가장 은혜롭게 이어지는 찬양 콘티 총 ${targetCount}곡을 설계해라.
-
-입력 정보:
-- 예배 대상: ${target}
-- 설교 제목: ${sermon}
-- 성경 본문: ${bible}
-- 예배 주제: ${theme}
-- 찬양 시간: ${time} (추천해야 하는 찬양 수: ${targetCount}곡)
-- 원하는 코드 (Key): ${reqKey || '상관없음'}
-- 꼭 넣고 싶은 찬양: ${wishSong || '없음'}
-
-추천 및 정렬 조건:
-1. 찬양의 배치 순서(도입-경배-빌드업-기도/헌신)의 흐름과 감정선을 고려한다.
-2. 앞뒤 곡의 코드(Key)가 자연스럽게 호환되도록(같은 Key 또는 4도/5도/나란한조) 조율한다.
-3. 꼭 넣고 싶은 찬양이 있다면, 가급적 그 찬양을 어울리는 순서에 반드시 배치해라.
-4. 각 추천 곡마다 예배 흐름에서의 명확한 역할("경배", "찬양", "은혜", "결단", "헌신" 중 하나)을 지정해라.
-5. 각 추천 곡의 추천 이유(reason)를 예배팀 반주자 및 싱어들이 직관적으로 볼 수 있게 한글 80자 이내의 짧고 세련된 연출 핵심 팁으로 적어라.
-6. 템포(BPM)를 숫자로 지정해라.
-
-반드시 다른 설명 텍스트 없이 오직 아래 지정된 JSON 배열 포맷으로만 응답해야 한다.
-[
-  {
-    "title": "찬양 제목",
-    "key": "추천 Key",
-    "bpm": 80,
-    "role": "역할 (경배/찬양/은혜/결단/헌신 중 하나)",
-    "reason": "한글 80자 이내의 은혜로운 추천 연출 이유"
-  }
-]
-`;
-
-  const requestBody = {
-    model: "gpt-5.5-mini",
-    messages: [
-      { role: "user", content: prompt }
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.7
-  };
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  });
-  
-  if (!response.ok) {
-    const errData = await response.json();
-    throw new Error('OpenAI API Quota 에러: ' + (errData.error?.message || response.statusText));
-  }
-  
-  const data = await response.json();
-  let jsonText = data.choices?.[0]?.message?.content || '';
-  
-  // 백틱 제거
-  jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '').trim();
-  
-  // JSON array 형식이 아닐 경우 객체 래핑 파싱
-  const arrayMatch = jsonText.match(/\[[\s\S]*\]/);
-  if (arrayMatch) {
-    jsonText = arrayMatch[0];
-  } else {
-    const objMatch = jsonText.match(/\{[\s\S]*\}/);
-    if (objMatch) {
-      const parsedObj = superRobustJSONParser(objMatch[0]);
-      if (parsedObj.recommendations) {
-        return parsedObj.recommendations;
-      }
-    }
-  }
-  
-  try {
-    const resultObj = superRobustJSONParser(jsonText);
-    if (Array.isArray(resultObj)) {
-      return resultObj;
-    }
-    throw new Error('올바른 배열 규격이 아닙니다.');
-  } catch (parseErr) {
-    console.error("OpenAI Helper parsing fail. Raw: ", jsonText);
-    return getLocalWorshipHelperRecommendations(target, theme, time, reqKey, wishSong);
-  }
-}
-
-// 로컬 200곡 기반 AI 예배 도우미 매칭
-function getLocalWorshipHelperRecommendations(target, theme, time, reqKey, wishSong) {
-  const songCountMap = { "10분": 2, "15분": 3, "20분": 4, "30분": 5 };
-  const targetCount = songCountMap[time] || 4;
-  
-  let ageTarget = "youth";
-  if (target.includes("유년") || target.includes("초등")) ageTarget = "child";
-  if (target.includes("장년")) ageTarget = "adult";
-  
-  let pool = localPraiseDB.filter(song => song.target === ageTarget);
-  if (pool.length < 15) {
-    pool = [...localPraiseDB];
-  }
-  
-  const selected = [];
-  
-  if (wishSong) {
-    const foundSong = localPraiseDB.find(s => s.title.replace(/\s/g, '').includes(wishSong.replace(/\s/g, '')));
-    if (foundSong) {
-      selected.push(foundSong);
-    }
-  }
-  
-  let currentKey = reqKey || (selected.length > 0 ? selected[0].key : "G");
-  const roles = ["경배", "찬양", "은혜", "결단", "헌신"];
-  
-  while (selected.length < targetCount) {
-    let compatiblePool = pool.filter(song => 
-      !selected.map(s => s.title).includes(song.title) && 
-      (song.key === currentKey || isKeyCompatible(currentKey, song.key))
-    );
-    
-    if (compatiblePool.length === 0) {
-      compatiblePool = pool.filter(song => !selected.map(s => s.title).includes(song.title));
-    }
-    
-    if (compatiblePool.length === 0) break;
-    
-    compatiblePool.forEach(song => {
-      let score = 0;
-      if (song.themes.includes("grace") && theme.includes("은혜")) score += 5;
-      if (song.themes.includes("decision") && theme.includes("결단")) score += 5;
-      song._tempScore = score;
-    });
-    
-    compatiblePool.sort((a, b) => b._tempScore - a._tempScore);
-    const topChoices = compatiblePool.slice(0, Math.min(3, compatiblePool.length));
-    const nextSong = topChoices[Math.floor(Math.random() * topChoices.length)];
-    
-    selected.push(nextSong);
-    currentKey = nextSong.key;
-  }
-  
-  return selected.map((song, idx) => {
-    let bpmValue = 72;
-    if (song.bpm === "medium") bpmValue = 85;
-    if (song.bpm === "fast") bpmValue = 115;
-    
-    return {
-      title: song.title,
-      artist: song.artist,
-      key: song.key,
-      bpm: bpmValue,
-      role: roles[idx % roles.length],
-      reason: song.reason
-    };
-  });
-}
-
-// AI 예배 도우미 결과 화면 출력 렌더링
-function displayAIHelperResults(recommendations) {
-  const resultsBox = document.getElementById('ai-helper-results');
-  const resultsContainer = document.getElementById('ai-helper-results-container');
-  resultsContainer.innerHTML = '';
-  
-  if (recommendations._isFallback) {
-    const banner = document.createElement('div');
-    banner.style.cssText = `
-      background: #fffbeb;
-      border: 1px solid #fef3c7;
-      border-radius: var(--radius-sm);
-      padding: 10px;
-      font-size: 0.72rem;
-      line-height: 1.4;
-      color: #b45309;
-      margin-bottom: 8px;
-    `;
-    banner.innerHTML = `<i class="fa-solid fa-circle-info"></i> OpenAI 크레딧 잔액 부족으로 로컬 TIKITAKA 200곡 엔진 기반 추천으로 정상 전환되었습니다.`;
-    resultsContainer.appendChild(banner);
-  }
-  
-  const roleColors = {
-    "경배": { bg: "#eef2ff", border: "#c7d2fe", text: "#4f46e5" },
-    "찬양": { bg: "#ecfdf5", border: "#a7f3d0", text: "#059669" },
-    "은혜": { bg: "#fff7ed", border: "#ffedd5", text: "#ea580c" },
-    "결단": { bg: "#fdf2f8", border: "#fbcfe8", text: "#db2777" },
-    "헌신": { bg: "#f5f3ff", border: "#ddd6fe", text: "#7c3aed" }
-  };
-  
-  recommendations.forEach((rec, index) => {
-    const card = document.createElement('div');
-    card.className = 'rec-song-card';
-    card.style.cssText = `
-      background: #ffffff;
-      border: 1px solid rgba(229,231,235,0.8);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    `;
-    
-    const roleStyle = roleColors[rec.role] || { bg: "#f3f4f6", border: "#e5e7eb", text: "#4b5563" };
-    const roleBadge = `<span style="background: ${roleStyle.bg}; border: 1px solid ${roleStyle.border}; color: ${roleStyle.text}; padding: 3px 8px; border-radius: var(--radius-sm); font-size: 0.6875rem; font-weight: 700;">${escapeHtml(rec.role)}</span>`;
-    
-    const keyBadge = rec.key ? `<span class="song-key-badge">${escapeHtml(rec.key)} Key</span>` : '';
-    const bpmBadge = rec.bpm ? `<span class="song-key-badge" style="background: rgba(229,231,235,0.4); color: var(--text-sub);">${rec.bpm} BPM</span>` : '';
-    
-    const query = encodeURIComponent(`${rec.title} ${rec.artist || ''}`);
-    const youtubeUrl = `https://www.youtube.com/results?search_query=${query}`;
-    
-    card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 0.8125rem; font-weight: 700; color: #818cf8; background: #e0e7ff; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;">${index + 1}</span>
-          <h3 class="card-title" style="margin: 0; font-size: 0.9375rem;">${escapeHtml(rec.title)}</h3>
-        </div>
-        <div style="display: flex; gap: 4px; align-items: center;">
-          ${roleBadge}
-        </div>
-      </div>
-      
-      <div style="display: flex; gap: 6px; align-items: center;">
-        ${keyBadge}
-        ${bpmBadge}
-      </div>
-      
-      <div class="rec-reason-box" style="font-size: 0.75rem; color: var(--text-sub); background: var(--bg-main); padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid rgba(229,231,235,0.5); line-height: 1.4;">
-        <strong>추천 연출 팁:</strong> ${escapeHtml(rec.reason)}
-      </div>
-      
-      <div style="display: flex; gap: 8px; margin-top: 4px;">
-        <a href="${youtubeUrl}" target="_blank" rel="noopener noreferrer" class="rec-youtube-btn" style="flex: 1; text-align: center; font-size: 0.75rem; padding: 6px; border-radius: var(--radius-sm); border: 1px solid #f3f4f6; color: #ef4444; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
-          <i class="fa-brands fa-youtube"></i> 유튜브 검색
-        </a>
-        <button type="button" class="btn-add-to-conti" onclick="openRecAddModal('${escapeHtml(rec.title)}', '${escapeHtml(rec.key)}', '${escapeHtml(rec.reason)}', '${escapeHtml(youtubeUrl)}')" style="flex: 1; font-size: 0.75rem; padding: 6px; border-radius: var(--radius-sm); font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
-          <i class="fa-solid fa-plus"></i> 콘티에 추가
-        </button>
-      </div>
-    `;
-    
-    resultsContainer.appendChild(card);
-  });
-  
-  resultsBox.style.display = 'flex';
-}
+// AI 추천 관련 유틸리티 및 함수군 삭제 완료
 
 // ==========================================================================
 // [시편 찬양 말씀 묵상 및 일일 출석체크 로직]
@@ -3494,6 +3216,13 @@ function renderDevotionTab() {
     const attendanceBadgeHtml = db.activeRole === 'admin'
       ? `<span style="font-size: 0.65rem; background: #10b981; color: #fff; padding: 1px 5px; border-radius: 8px; font-weight: 700;">출석완료</span>`
       : '';
+
+    // 관리자용 휴지통 삭제 버튼
+    const deleteBtnHtml = db.activeRole === 'admin'
+      ? `<button type="button" class="icon-btn danger-btn" onclick="deleteDevotionPost('${escapeHtml(post.id)}')" title="삭제" style="color: #ef4444; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 0;">
+           <i class="fa-solid fa-trash"></i>
+         </button>`
+      : '';
     
     card.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -3503,7 +3232,10 @@ function renderDevotionTab() {
           </span>
           ${attendanceBadgeHtml}
         </div>
-        <span style="font-size: 0.6875rem; color: var(--text-muted); font-weight: 500;"><i class="fa-regular fa-clock"></i> ${post.time}</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 0.6875rem; color: var(--text-muted); font-weight: 500;"><i class="fa-regular fa-clock"></i> ${post.time}</span>
+          ${deleteBtnHtml}
+        </div>
       </div>
       
       <p style="font-size: 0.8125rem; font-weight: 500; color: var(--text-main); line-height: 1.55; white-space: pre-wrap; margin: 0; padding: 4px 0;">${escapeHtml(post.content)}</p>
@@ -3766,7 +3498,148 @@ function addPraiseToCurrentConti(songObj) {
   showToast("콘티에 추가되었습니다.");
 }
 
+// 묵상 피드 개별 게시글 삭제 함수 (관리자 전용 및 실시간 동기화 지원)
+function deleteDevotionPost(postId) {
+  if (!confirm('정말로 이 묵상 피드를 삭제하시겠습니까?')) return;
+  
+  const church = db.churches[db.activeChurchId];
+  if (!church || !church.devotions) return;
+  
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const date = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${date}`;
+  
+  const dayData = church.devotions[todayStr];
+  if (!dayData || !dayData.posts) return;
+  
+  const index = dayData.posts.findIndex(post => post.id === postId);
+  if (index > -1) {
+    dayData.posts.splice(index, 1);
+    
+    // 로컬 DB 및 Firebase 실시간 연동 업데이트
+    saveDatabase();
+    renderDevotionTab();
+    showToast("묵상 피드가 삭제되었습니다.");
+  }
+}
+
+// 최고 관리자(Super Admin) 로그인 처리 함수
+function handleSuperLogin() {
+  const idVal = document.getElementById('super-id-input').value.trim();
+  const pwVal = document.getElementById('super-pw-input').value.trim();
+  
+  if (idVal === 'manalkh' && pwVal === '9570') {
+    state.isSuperAdmin = true;
+    document.getElementById('super-id-input').value = '';
+    document.getElementById('super-pw-input').value = '';
+    
+    // UI 전환
+    document.getElementById('super-login-form-box').style.display = 'none';
+    document.getElementById('super-dashboard-box').style.display = 'block';
+    
+    renderSuperChurchList();
+    showToast("최고 관리자로 로그인했습니다.");
+  } else {
+    alert('최고 관리자 인증에 실패했습니다. 아이디 또는 비밀번호를 확인해 주세요.');
+  }
+}
+
+// 최고 관리자 로그아웃 처리 함수
+function handleSuperLogout() {
+  state.isSuperAdmin = false;
+  document.getElementById('super-login-form-box').style.display = 'block';
+  document.getElementById('super-dashboard-box').style.display = 'none';
+  showToast("최고 관리자 로그아웃 완료.");
+}
+
+// 최고 관리자: 전체 교회 목록 렌더링 함수
+function renderSuperChurchList() {
+  const listContainer = document.getElementById('super-church-list');
+  if (!listContainer) return;
+  listContainer.innerHTML = '<span style="font-size:0.75rem; color:var(--text-muted); padding: 10px 0;">교회 리스트 불러오는 중...</span>';
+  
+  fbDB.ref('churches').once('value').then(snapshot => {
+    const churches = snapshot.val() || {};
+    listContainer.innerHTML = '';
+    
+    const keys = Object.keys(churches);
+    if (keys.length === 0) {
+      listContainer.innerHTML = '<span style="font-size:0.72rem; color:var(--text-muted); font-style:italic; padding: 10px 0;">등록된 교회가 없습니다.</span>';
+      return;
+    }
+    
+    keys.forEach(key => {
+      const church = churches[key];
+      const item = document.createElement('div');
+      item.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        box-shadow: var(--shadow-xs);
+      `;
+      
+      item.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 2px; max-width: 70%;">
+          <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">${escapeHtml(church.name)}</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted);">${escapeHtml(church.teamName || '찬양팀')} (ID: ${key})</span>
+          <span style="font-size: 0.65rem; color: #4f46e5; font-weight: 600;">비번: 팀원(${escapeHtml(church.memberPassword)}) / 관리자(${escapeHtml(church.adminPassword)})</span>
+        </div>
+        <button type="button" onclick="deleteChurch('${key}', '${escapeHtml(church.name.replace(/'/g, "\\'"))}')" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.18); color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 0.6875rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">교회 삭제</button>
+      `;
+      listContainer.appendChild(item);
+    });
+  }).catch(err => {
+    listContainer.innerHTML = `<span style="font-size:0.72rem; color:#ef4444; padding: 10px 0;">목록 조회 오류: ${err.message}</span>`;
+  });
+}
+
+// 최고 관리자: 특정 교회 원격 영구 삭제 함수
+function deleteChurch(churchId, churchName) {
+  if (!confirm(`🚨 [경고] 정말로 "${churchName}" 교회를 영구 삭제하시겠습니까?\n이 교회의 모든 콘티, 묵상, 공지 등 모든 클라우드 데이터가 통째로 삭제되며 복구할 수 없습니다.`)) return;
+  
+  const performDelete = () => {
+    // 로컬 메모리에서도 정리
+    if (db && db.churches && db.churches[churchId]) {
+      delete db.churches[churchId];
+      if (db.activeChurchId === churchId) {
+        db.activeChurchId = null;
+        db.activeRole = 'member';
+      }
+      saveDatabase();
+    }
+    
+    renderSuperChurchList();
+    showToast(`"${churchName}" 교회가 성공적으로 삭제되었습니다.`);
+    
+    // 만약 현재 삭제된 교회 세션으로 로그인해 있었던 상태라면 세션을 풀고 로그인 화면으로 보냄
+    if (db.activeChurchId === null) {
+      alert('현재 로그인된 교회가 최고 관리자에 의해 삭제되어 로그아웃 처리됩니다.');
+      location.reload();
+    }
+  };
+
+  if (fbDB) {
+    // Firebase 원격 데이터베이스 노드 제거
+    fbDB.ref(`churches/${churchId}`).remove().then(() => {
+      performDelete();
+    }).catch(err => {
+      alert('교회 삭제 실패: ' + err.message);
+    });
+  } else {
+    performDelete();
+  }
+}
+
 // 전역 스코프 인라인 바인딩 맵핑
 window.openYoutubePlayer = openYoutubePlayer;
 window.closeYoutubePlayer = closeYoutubePlayer;
 window.addPraiseToCurrentConti = addPraiseToCurrentConti;
+window.deleteDevotionPost = deleteDevotionPost;
+window.deleteChurch = deleteChurch;
