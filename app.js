@@ -72,6 +72,31 @@ const demoNotices = {
 
 // 20년 경력 예배 디렉터 지식 베이스 찬양 DB (AI 시뮬레이션용 - 54곡 대폭 확장)
 const localPraiseDB = [
+  { title: "사랑한다 말하시네", artist: "기프티드 (Gifted Worship)", key: "C", bpm: "slow", mood: "calm", target: "youth", themes: ["comfort", "grace"], reason: "언제나 나를 사랑한다 말씀해 주시는 주님의 위로가 마음에 깊이 닿는 곡입니다." },
+  { title: "주 예수 나의 당신이여", artist: "기프티드 (Gifted Worship)", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "주님만을 사랑하는 일편단심 예배자의 절절한 연모와 고백을 장중히 전달합니다." },
+  { title: "가장 빛나는 별", artist: "기프티드 (Gifted Worship)", key: "A", bpm: "slow", mood: "calm", target: "youth", themes: ["comfort", "thanks"], reason: "내 영혼의 가장 빛나는 새벽 별이 되시는 예수를 기쁘고 영롱하게 고백합니다." },
+  { title: "그가 내 안에", artist: "기프티드 (Gifted Worship)", key: "G", bpm: "medium", mood: "grand", target: "adult", themes: ["grace", "worship"], reason: "주께서 내 안에 거하시고 내가 주 안에 거하는 깊은 연합의 감격을 누리게 합니다." },
+  { title: "내 진정 사모하는 (찬송가 88장)", artist: "기프티드 (Gifted Worship)", key: "F", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "기존 찬송가를 기프티드 고유의 시원하고 모던한 밴드 리듬 사운드로 역동감 있게 표현했습니다." },
+  { title: "꽃들도", artist: "피아워십 (FIA Worship)", key: "G", bpm: "medium", mood: "bright", target: "child", themes: ["thanks", "worship"], reason: "이 땅의 모든 꽃들과 자연이 구주 예수를 소리 높여 대찬양함을 사랑스럽게 노래합니다." },
+  { title: "사랑하셔서 오시었네", artist: "피아워십 (FIA Worship)", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "낮고 천한 나를 위해 하늘 보좌 버리고 내려오신 십자가 사랑의 깊이를 기억합니다." },
+  { title: "요게벳의 노래", artist: "피아워십 (FIA Worship)", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "어머니의 눈물 어린 위탁과 기도를 담은 피아워십 특유의 따뜻하고 감정선 짙은 CCM입니다." },
+  { title: "내 영혼이 따뜻한 예배를", artist: "피아워십 (FIA Worship)", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "기교와 형식을 버리고 온전히 영과 진리로 주님만을 따뜻하게 예배하도록 인도합니다." },
+  { title: "목마른 사슴", artist: "찬송가 편곡", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "comfort"], reason: "시편 말씀을 바탕으로 주님만을 갈급하게 사모하는 목마름을 서정적인 멜로디로 연출합니다." },
+  { title: "나의 약함은 나의 자랑이요", artist: "피아워십 (FIA Worship)", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "나의 연약함을 자랑하며 주님의 일하심을 잔잔한 고백으로 높여 드립니다." },
+  { title: "하나님의 은혜", artist: "피아워십 (FIA Worship)", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "thanks"], reason: "한량없는 주님의 은혜를 따뜻하고 깊은 보컬 하모니로 은혜롭게 나눕니다." },
+  { title: "내 모든 삶 행동 주 안에", artist: "피아워십 (FIA Worship)", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "경쾌한 템포에 맞춰 매일의 삶 속에서 주를 예배함을 신나게 선포합니다." },
+  { title: "나의 하나님 (El Shaddai)", artist: "피아워십 (FIA Worship)", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "전능하신 나의 하나님을 피아워십 특유의 따뜻하고 웅장한 사운드로 노래합니다." },
+  { title: "예수 사랑하심은 (피아 메들리)", artist: "피아워십 (FIA Worship)", key: "Eb", bpm: "slow", mood: "calm", target: "child", themes: ["grace", "comfort"], reason: "가장 기본적인 찬송가 멜로디를 부드러운 아쿠스틱 기타 반주와 연결해 노래합니다." },
+  { title: "주를 위한 이곳에", artist: "기프티드 (Gifted Worship)", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "오직 주님 한 분만 예배하는 예배자의 참된 태도를 깊이 다짐하게 돕는 곡입니다." },
+  { title: "내 눈 주의 영광을 보네", artist: "기프티드 (Gifted Worship)", key: "G", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "이 땅의 회복과 부흥을 노래하며 다 함께 일어서는 찬양의 파도를 만듭니다." },
+  { title: "나의 피난처 예수", artist: "기프티드 (Gifted Worship)", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "어려운 상황 속에서도 피난처 되신 예수님만을 의지하는 감격의 고백입니다." },
+  { title: "주님은 산 같아서", artist: "기프티드 (Gifted Worship)", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "흔들리지 않는 영원한 요새와 같으신 주님의 사랑을 잔잔하게 신뢰하게 합니다." },
+  { title: "그 사랑 얼마나", artist: "기프티드 (Gifted Worship)", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "헤아릴 수 없는 그 십자가 사랑의 너비와 높이를 묵상하는 따뜻한 찬양입니다." },
+  { title: "만 입이 내게 있으면 (찬송가 23장)", artist: "찬송가 편곡", key: "A", bpm: "fast", mood: "bright", target: "adult", themes: ["worship", "thanks"], reason: "내 모든 입을 열어 구주 예수의 이름을 높이며 찬양의 문을 여는 기쁜 오프닝곡입니다." },
+  { title: "구주 예수 의지함이 (찬송가 542장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "adult", themes: ["grace", "comfort"], reason: "예수님만을 전적으로 신뢰하는 자에게 평안과 은혜가 흘러넘침을 경쾌하게 선포합니다." },
+  { title: "아 하나님의 은혜로 (찬송가 310장)", artist: "찬송가 편곡", key: "D", bpm: "medium", mood: "calm", target: "adult", themes: ["grace", "thanks"], reason: "내가 믿고 또 의지하는 주님의 신실하심을 모던한 포크 편곡으로 기쁘게 노래합니다." },
+  { title: "오 신실 하신 주 (찬송가 393장)", artist: "찬송가 편곡", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "변함없이 매일의 필요를 자비로 채우시는 하나님을 장중하게 경배합니다." },
+  { title: "내 평생에 가는 길 (찬송가 413장)", artist: "찬송가 편곡", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "어떤 고난과 풍파 속에서도 내 영혼 평안해, 소망의 고백을 묵상하는 위대한 찬송입니다." },
   { title: "시간을 뚫고", artist: "위러브 (WELOVE)", key: "A", bpm: "medium", mood: "calm", target: "youth", themes: ["worship", "grace"], reason: "예배의 시작 단계에서 하나님의 임재를 잔잔히 선포하기에 최적의 모던 CCM 고백입니다." },
   { title: "공감하시네", artist: "위러브 (WELOVE)", key: "G", bpm: "slow", mood: "calm", target: "youth", themes: ["grace", "comfort"], reason: "회중의 아픔을 공감하시는 주님의 사랑을 고백하며, 잔잔하고 묵상하는 흐름에 강력한 감동을 줍니다." },
   { title: "밝은 빛을 비추시네", artist: "위러브 (WELOVE)", key: "D", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "밝고 활기찬 신디사이저 리드에 맞춰 기쁨으로 예배의 문을 열기 좋은 댄스 업템포 찬양입니다." },
@@ -404,16 +429,24 @@ async function initDatabase() {
   let isLegacy = !db.churches || !db.churches['church-1'] || !db.churches['church-1'].memberPassword;
   if (!isLegacy) {
     const church1 = db.churches['church-1'];
-    if (church1 && church1.worships['service-2'] && !church1.worships['service-2'].description) {
+    if (church1 && church1.worships && church1.worships['service-2'] && !church1.worships['service-2'].description) {
       isLegacy = true;
     }
   }
   
   if (isLegacy) {
-    console.log("Schema mismatch: resetting to default structure...");
+    console.log("Schema mismatch: resetting default structure safely...");
+    const oldChurches = db.churches || {};
     db = defaultData;
     db.churches['church-1'].notices = demoNotices['church-1'];
     db.churches['church-2'].notices = demoNotices['church-2'];
+    
+    // [소중한 신규 가입 데이터 보존 가드] 기존 가입해 둔 다른 소중한 교회 정보가 있다면 유실 없이 안전하게 병합!
+    for (const key in oldChurches) {
+      if (key !== 'church-1' && key !== 'church-2') {
+        db.churches[key] = oldChurches[key];
+      }
+    }
     saveDatabase();
   } else {
     let needsSave = false;
@@ -591,6 +624,12 @@ function saveDatabase() {
     localStorage.setItem('worship_liturgy_db', JSON.stringify(db));
   } catch (storageErr) {
     console.warn("로컬 백업 캐시 용량이 초과되었으나, 클라우드 실시간 저장을 강제 계속 진행합니다:", storageErr);
+  }
+  
+  // 만약 Firebase 서버 연결이 Off(null) 상태이거나 오프라인이라면, 클라우드 동기화는 건너뛰고 안전하게 로컬만 저장하고 리턴!
+  if (!fbDB) {
+    console.log("Offline local backup saved successfully.");
+    return;
   }
   
   // 클라우드 동기화 락 작동
@@ -2282,6 +2321,12 @@ function renderSongList() {
   }
   
   items.forEach((song, index) => {
+    // [자가 치유 실시간 마이그레이션] 이전에 추가된 구버전 데이터 중 id가 유실된 곡이 있다면 즉석 실시간 고유 ID 부여!
+    if (!song.id) {
+      song.id = 'song-' + Date.now() + '-' + index + '-' + Math.floor(Math.random() * 1000);
+      saveDatabase();
+    }
+    
     const songItem = document.createElement('div');
     songItem.className = 'song-item';
     songItem.dataset.index = index;
@@ -3619,9 +3664,12 @@ function openYoutubePlayer(title, youtubeUrlOrSearchTitle) {
     }
   }
   
-  // 2. 유튜브 URL이 아니거나 ID 추출 실패 시 검색어 임베드 기능 활용
+  // 2. 유튜브 URL이 아니거나 ID 추출 실패(단순 검색어) 시, 구글 보안 정책(X-Frame-Options) 우회를 위해 새 탭으로 즉각 오픈!
   if (!embedUrl) {
-    embedUrl = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(youtubeUrlOrSearchTitle)}&autoplay=1`;
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(youtubeUrlOrSearchTitle)}`;
+    window.open(searchUrl, '_blank');
+    showToast("유튜브 검색창을 새 탭으로 연결했습니다.");
+    return;
   }
   
   iframe.src = embedUrl;
@@ -3695,7 +3743,13 @@ function performPraiseSearch() {
     const artistVal = song.artist ? ` - ${song.artist}` : '';
     const youtubeParam = `${song.title} ${song.artist || ''}`;
     
-    // 유튜브 보기 버튼 (보라색), 콘티 추가 버튼 (파란색)
+    // 유튜브 보기 버튼 (보라색), 콘티 추가 버튼 (파란색 - 관리자 권한 전용 제한)
+    const addContiBtnHtml = (db.activeRole === 'admin') ? `
+      <button type="button" class="btn-praise-add-conti" onclick="addPraiseToCurrentConti(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+        <i class="fa-solid fa-plus"></i> ➕ 콘티 추가
+      </button>
+    ` : '';
+
     card.innerHTML = `
       <div class="search-card-header">
         <span class="search-card-title">${escapeHtml(song.title)}<span style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">${escapeHtml(artistVal)}</span></span>
@@ -3708,9 +3762,7 @@ function performPraiseSearch() {
         <button type="button" class="btn-youtube-view" onclick="openYoutubePlayer('${escapeHtml(song.title.replace(/'/g, "\\'"))}', '${escapeHtml(youtubeParam.replace(/'/g, "\\'"))}')">
           <i class="fa-solid fa-play"></i> ▶ 유튜브 보기
         </button>
-        <button type="button" class="btn-praise-add-conti" onclick="addPraiseToCurrentConti(${JSON.stringify(song).replace(/"/g, '&quot;')})">
-          <i class="fa-solid fa-plus"></i> ➕ 콘티 추가
-        </button>
+        ${addContiBtnHtml}
       </div>
     `;
     resultsContainer.appendChild(card);
@@ -3720,16 +3772,32 @@ function performPraiseSearch() {
 // 검색 모달 내의 찬양을 현재 활성화된 예배/주차 콘티에 즉시 추가
 function addPraiseToCurrentConti(songObj) {
   const church = db.churches[db.activeChurchId];
-  if (!church) return;
-  
-  // 현재 선택된 예배 아이디 확인
-  const currentWorshipId = state.selectedServiceId;
-  if (!currentWorshipId) {
-    alert('먼저 메인 화면에서 예배(2부, 3부 등)를 선택한 뒤 곡을 추가해 주세요!');
+  // 등록된 전체 예배 목록(2부, 3부 등) 중에서 사용자가 타겟 폴더를 선택하도록 물어봅니다.
+  const worshipIds = Object.keys(church.worships || {});
+  if (worshipIds.length === 0) {
+    alert('등록된 예배 폴더가 없습니다. 먼저 메인 화면에서 예배를 등록해 주세요!');
     return;
   }
   
-  const worship = church.worships[currentWorshipId];
+  let targetWorshipId = "";
+  if (worshipIds.length === 1) {
+    targetWorshipId = worshipIds[0];
+  } else {
+    let msg = "이 찬양을 추가할 예배 폴더의 번호를 입력해 주세요:\n\n";
+    worshipIds.forEach((id, idx) => {
+      msg += `${idx + 1}. ${church.worships[id].title || id}\n`;
+    });
+    const selection = prompt(msg, "1");
+    if (selection === null) return; // 취소 누른 경우 중단
+    const selIdx = parseInt(selection) - 1;
+    if (isNaN(selIdx) || selIdx < 0 || selIdx >= worshipIds.length) {
+      alert('올바르지 않은 번호입니다. 추가를 취소합니다.');
+      return;
+    }
+    targetWorshipId = worshipIds[selIdx];
+  }
+  
+  const worship = church.worships[targetWorshipId];
   if (!worship) return;
   
   // 디폴트 주차는 이번주(this-week)
@@ -3742,8 +3810,9 @@ function addPraiseToCurrentConti(songObj) {
   const week = worship.weeks[currentWeekId];
   if (!week.items) week.items = [];
   
-  // 곡 오브젝트 규격 변환
+  // 곡 오브젝트 규격 변환 (삭제 처리를 위한 고유 ID 필드 추가 탑재)
   const newContiSong = {
+    id: 'song-' + Date.now() + '-' + Math.floor(Math.random() * 1000), // 고유한 ID 발급!
     title: songObj.title,
     key: songObj.key || 'C',
     bpm: songObj.bpm || '80',
@@ -3757,8 +3826,8 @@ function addPraiseToCurrentConti(songObj) {
   // DB 저장 및 클라우드 동기화 개시
   saveDatabase();
   
-  // 찬양 상세 리스트 화면이 활성화되어 있을 경우 UI 즉시 갱신
-  if (document.getElementById('screen-detail').classList.contains('active')) {
+  // 찬양 상세 리스트 화면이 활성화되어 있고 현재 활성화된 화면이 타겟 예배일 때 UI 즉시 갱신
+  if (document.getElementById('screen-detail').classList.contains('active') && state.selectedServiceId === targetWorshipId) {
     renderSongList();
   }
   

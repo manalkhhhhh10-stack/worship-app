@@ -754,10 +754,10 @@
   <!-- [NEW] 앱 공용 하단 플로팅 토스트 메시지 -->
   <div id="toast-container" class="toast-message">콘티에 추가되었습니다.</div>
 
-  <!-- Firebase SDK Compat CDN (실시간 동기화 클라우드 시스템) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <!-- Firebase SDK Compat CDN (실시간 동기화 클라우드 시스템 - 비차단 비동기 defer 로드) -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
-  <script src="app.js?v=3.5.1"></script>
+  <script defer src="app.js?v=3.6.0"></script>
 </body>
 </html>
