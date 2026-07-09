@@ -306,6 +306,25 @@ function startCloudSync(churchId) {
     const updatedChurch = snapshot.val();
     if (!updatedChurch) return;
     
+    // 3차 클라우드 수신 데이터 누락 방지 가드 (구버전 2/3/4부 예배 강제 마이그레이션)
+    if (!updatedChurch.worships) updatedChurch.worships = {};
+    for (const wId in updatedChurch.worships) {
+      const worship = updatedChurch.worships[wId];
+      if (!worship.weeks) {
+        worship.weeks = {
+          'this-week': { title: '이번 주 찬양', items: [] },
+          'next-week': { title: '다음 주 찬양', items: [] }
+        };
+      } else {
+        if (!worship.weeks['this-week']) {
+          worship.weeks['this-week'] = { title: '이번 주 찬양', items: [] };
+        }
+        if (!worship.weeks['next-week']) {
+          worship.weeks['next-week'] = { title: '다음 주 찬양', items: [] };
+        }
+      }
+    }
+    
     // 로컬 메모리에 즉시 반영
     db.churches[churchId] = updatedChurch;
     localStorage.setItem('worship_liturgy_db', JSON.stringify(db));
@@ -315,9 +334,10 @@ function startCloudSync(churchId) {
       renderWorshipList();
       renderNoticeList();
     } else if (state.currentScreen === 'sub') {
-      renderSubScreen();
+      // sub 화면은 동적 요소가 없으므로 리렌더링 패스
     } else if (state.currentScreen === 'detail') {
-      renderDetailScreen();
+      renderSongDetailHeader();
+      renderSongList();
     }
   });
 }
@@ -408,6 +428,24 @@ async function initDatabase() {
         if (worship.date === undefined) {
           worship.date = '2026-07-12';
           needsSave = true;
+        }
+        
+        // 이번 주 / 다음 주 기본 주차 구조 누락 방지 마이그레이션
+        if (worship.weeks === undefined) {
+          worship.weeks = {
+            'this-week': { title: '이번 주 찬양', items: [] },
+            'next-week': { title: '다음 주 찬양', items: [] }
+          };
+          needsSave = true;
+        } else {
+          if (worship.weeks['this-week'] === undefined) {
+            worship.weeks['this-week'] = { title: '이번 주 찬양', items: [] };
+            needsSave = true;
+          }
+          if (worship.weeks['next-week'] === undefined) {
+            worship.weeks['next-week'] = { title: '다음 주 찬양', items: [] };
+            needsSave = true;
+          }
         }
         
         const weeks = worship.weeks || {};
@@ -983,9 +1021,9 @@ function renderWorshipList() {
       <div class="card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
     `;
     
-    // 카드 클릭 시 서브 화면(이번주/다음주 선택)으로 이동
+    // 카드 클릭 시 콘티 상세 화면으로 즉시 직행 (이번주 찬양)
     card.addEventListener('click', () => {
-      navigateTo('sub', key);
+      navigateTo('detail', key, 'this-week');
     });
     
     worshipListContainer.appendChild(card);
@@ -2109,6 +2147,13 @@ function renderSongDetailHeader() {
   const worship = church.worships[state.selectedServiceId];
   if (!worship) return;
   
+  if (!worship.weeks) worship.weeks = {};
+  if (!worship.weeks[state.selectedWeekId]) {
+    worship.weeks[state.selectedWeekId] = {
+      title: state.selectedWeekId === 'next-week' ? '다음 주 찬양' : '이번 주 찬양',
+      items: []
+    };
+  }
   const week = worship.weeks[state.selectedWeekId];
   if (!week) return;
   
@@ -2133,6 +2178,13 @@ function renderSongList() {
   const worship = church.worships[state.selectedServiceId];
   if (!worship) return;
   
+  if (!worship.weeks) worship.weeks = {};
+  if (!worship.weeks[state.selectedWeekId]) {
+    worship.weeks[state.selectedWeekId] = {
+      title: state.selectedWeekId === 'next-week' ? '다음 주 찬양' : '이번 주 찬양',
+      items: []
+    };
+  }
   const week = worship.weeks[state.selectedWeekId];
   if (!week) return;
   
@@ -2435,6 +2487,15 @@ function saveSong(event) {
   if (!church) return;
   const worship = church.worships[state.selectedServiceId];
   if (!worship) return;
+  
+  // 2차 런타임 누락 방지 더블 세이프 가드
+  if (!worship.weeks) worship.weeks = {};
+  if (!worship.weeks[state.selectedWeekId]) {
+    worship.weeks[state.selectedWeekId] = {
+      title: state.selectedWeekId === 'next-week' ? '다음 주 찬양' : '이번 주 찬양',
+      items: []
+    };
+  }
   const week = worship.weeks[state.selectedWeekId];
   if (!week) return;
   
@@ -2677,19 +2738,35 @@ document.addEventListener('DOMContentLoaded', () => {
     navigateTo('main');
   });
   
-  // 이전 콘티 목록 화면 -> 서브 화면 뒤로가기 바인딩
+  // 이전 콘티 목록 화면 -> 콘티 상세 화면으로 뒤로가기 바인딩
   document.getElementById('btn-history-back').addEventListener('click', () => {
-    navigateTo('sub', state.selectedServiceId);
+    navigateTo('detail', state.selectedServiceId, 'this-week');
   });
   
-  // 12. 상세 화면 -> 서브 화면 또는 이전 콘티 화면 뒤로가기
+  // 12. 상세 화면 -> 메인 화면 또는 이전 콘티 화면 뒤로가기
   document.getElementById('btn-back').addEventListener('click', () => {
     if (state.selectedWeekId && state.selectedWeekId.startsWith('archive-')) {
       navigateTo('history', state.selectedServiceId);
     } else {
-      navigateTo('sub', state.selectedServiceId);
+      navigateTo('main'); // sub 대신 메인 화면 대시보드로 복귀
     }
   });
+
+  // 상세 화면 헤더의 이전 콘티 아이콘 클릭 시 이동 바인딩
+  const btnPastDetail = document.getElementById('btn-past-weeks-detail');
+  if (btnPastDetail) {
+    btnPastDetail.addEventListener('click', () => {
+      navigateTo('history', state.selectedServiceId);
+    });
+  }
+
+  // 상세 화면 상단의 [지난 예배 콘티 내역 전체보기] 배너 바 클릭 시 이동 바인딩
+  const btnPastDetailBar = document.getElementById('btn-past-weeks-detail-bar');
+  if (btnPastDetailBar) {
+    btnPastDetailBar.addEventListener('click', () => {
+      navigateTo('history', state.selectedServiceId);
+    });
+  }
   
   // 13. 찬양 추가 버튼
   document.getElementById('btn-add-song').addEventListener('click', () => {
