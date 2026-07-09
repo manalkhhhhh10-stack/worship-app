@@ -2745,13 +2745,11 @@ document.addEventListener('DOMContentLoaded', () => {
       hideSplash();
     });
 
-    // 스킵 버튼을 누르면 즉시 해제
-    if (skipBtn) {
-      skipBtn.addEventListener('click', () => {
-        clearTimeout(splashTimeout);
-        hideSplash();
-      });
-    }
+    // 스플래시 화면 전체 영역 클릭 시 즉시 건너뛰기
+    splashScreen.addEventListener('click', () => {
+      clearTimeout(splashTimeout);
+      hideSplash();
+    });
   }
   
   // 1. 데이터베이스 및 세션 확인

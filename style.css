@@ -1398,8 +1398,10 @@ body.admin-mode .admin-actions {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   background-color: #0d0e15; /* 고급스러운 딥 블랙 네이비 */
   z-index: 99999 !important; /* 폰 프레임 내부 다른 screen들 위로 강제 노출 */
   display: flex;
@@ -1417,9 +1419,12 @@ body.admin-mode .admin-actions {
 }
 
 .splash-screen video {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   object-fit: cover; /* 화면을 꽉 차게 */
+  border-radius: inherit;
 }
 
 /* 건너뛰기 스킵 버튼 */
