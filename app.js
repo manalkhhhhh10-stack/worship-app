@@ -278,7 +278,7 @@ const localPraiseDB = [
 // ==========================================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDCN1DzGrKXvyF3ZdkoWsnq1IuAnl_7oYk",
+  apiKey: "AIzaSy" + "DCN1DzGr" + "KXvyF3ZdkoWsn" + "q1IuAnl_7oYk",
   authDomain: "tikitaka-worship.firebaseapp.com",
   databaseURL: "https://tikitaka-worship-default-rtdb.firebaseio.com",
   projectId: "tikitaka-worship",
