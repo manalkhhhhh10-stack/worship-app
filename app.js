@@ -909,11 +909,13 @@ function switchMainTab(tabName) {
   const btnConti = document.getElementById('btn-tab-conti');
   const btnNotice = document.getElementById('btn-tab-notice');
   const btnDevotion = document.getElementById('btn-tab-devotion');
+  const btnSearch = document.getElementById('btn-tab-search');
   const btnAI = document.getElementById('btn-tab-ai');
   
   const areaConti = document.getElementById('area-main-conti');
   const areaNotice = document.getElementById('area-main-notice');
   const areaDevotion = document.getElementById('area-main-devotion');
+  const areaSearch = document.getElementById('area-main-search');
   const areaAI = document.getElementById('area-main-ai');
   
   const btnAddWorship = document.getElementById('btn-add-worship');
@@ -922,11 +924,13 @@ function switchMainTab(tabName) {
   btnConti.classList.remove('active');
   btnNotice.classList.remove('active');
   if (btnDevotion) btnDevotion.classList.remove('active');
+  if (btnSearch) btnSearch.classList.remove('active');
   btnAI.classList.remove('active');
   
   areaConti.classList.remove('active');
   areaNotice.classList.remove('active');
   if (areaDevotion) areaDevotion.classList.remove('active');
+  if (areaSearch) areaSearch.classList.remove('active');
   areaAI.classList.remove('active');
   
   if (tabName === 'conti') {
@@ -955,6 +959,14 @@ function switchMainTab(tabName) {
     btnAddNotice.style.display = 'none';
     
     renderDevotionTab();
+  } else if (tabName === 'praise-search') {
+    if (btnSearch) btnSearch.classList.add('active');
+    if (areaSearch) areaSearch.classList.add('active');
+    
+    btnAddWorship.style.display = 'none';
+    btnAddNotice.style.display = 'none';
+    
+    performPraiseSearch(); // 검색 패널 활성화 시 리프레시 실행
   } else if (tabName === 'ai-rec') {
     btnAI.classList.add('active');
     areaAI.classList.add('active');
@@ -2282,12 +2294,12 @@ function renderSongList() {
     // YouTube 링크 버튼
     const hasYoutube = song.youtubeUrl && song.youtubeUrl.trim() !== '';
     const youtubeBtnHtml = hasYoutube
-      ? `<a href="${song.youtubeUrl}" target="_blank" rel="noopener noreferrer" class="youtube-link-btn">
+      ? `<button type="button" class="youtube-link-btn" onclick="openYoutubePlayer('${escapeHtml(song.title.replace(/'/g, "\\'"))}', '${escapeHtml(song.youtubeUrl.replace(/'/g, "\\'"))}')">
            <i class="fa-brands fa-youtube"></i> YouTube 영상
-         </a>`
-      : `<a class="youtube-link-btn disabled">
+         </button>`
+      : `<button type="button" class="youtube-link-btn disabled">
            <i class="fa-brands fa-youtube"></i> 영상 없음
-         </a>`;
+         </button>`;
          
     // 악보 보기 버튼
     const hasSheet = song.sheetMusic && song.sheetMusic.trim() !== '';
@@ -3009,40 +3021,32 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 27. TIKITAKA AI 예배 도우미 폼 제출 및 서브 탭 스위칭 바인딩
   document.getElementById('ai-helper-form').addEventListener('submit', handleAIHelperRecommendation);
-  document.getElementById('btn-submit-ai').addEventListener('click', handleAIRecommendation);
 
-  const subTabHelper = document.getElementById('btn-ai-sub-helper');
-  const subTabSearch = document.getElementById('btn-ai-sub-search');
-  const panelHelper = document.getElementById('panel-ai-helper');
-  const panelSearch = document.getElementById('panel-ai-search');
+  // [NEW] 앱 내부 유튜브 플레이어 모달 개폐 바인딩
+  const btnCloseYoutube = document.getElementById('btn-close-youtube-player');
+  if (btnCloseYoutube) {
+    btnCloseYoutube.addEventListener('click', closeYoutubePlayer);
+  }
+  const youtubePlayerModal = document.getElementById('youtube-player-modal');
+  if (youtubePlayerModal) {
+    youtubePlayerModal.addEventListener('click', (e) => {
+      if (e.target === youtubePlayerModal) {
+        closeYoutubePlayer();
+      }
+    });
+  }
 
-  subTabHelper.addEventListener('click', () => {
-    panelHelper.style.display = 'flex';
-    panelSearch.style.display = 'none';
-    
-    // 버튼 스타일 업데이트
-    subTabHelper.style.background = '#fff';
-    subTabHelper.style.color = '#818cf8';
-    subTabHelper.style.boxShadow = 'var(--shadow-sm)';
-    
-    subTabSearch.style.background = 'transparent';
-    subTabSearch.style.color = 'var(--text-sub)';
-    subTabSearch.style.boxShadow = 'none';
-  });
+  // [NEW] 찬양 실시간 검색창 이벤트 리스너 바인딩
+  const praiseSearchInput = document.getElementById('praise-search-input');
+  if (praiseSearchInput) {
+    praiseSearchInput.addEventListener('input', handlePraiseSearchInput);
+  }
 
-  subTabSearch.addEventListener('click', () => {
-    panelSearch.style.display = 'flex';
-    panelHelper.style.display = 'none';
-    
-    // 버튼 스타일 업데이트
-    subTabSearch.style.background = '#fff';
-    subTabSearch.style.color = '#818cf8';
-    subTabSearch.style.boxShadow = 'var(--shadow-sm)';
-    
-    subTabHelper.style.background = 'transparent';
-    subTabHelper.style.color = 'var(--text-sub)';
-    subTabHelper.style.boxShadow = 'none';
-  });
+  // 28. [NEW] 찬양 검색 메인 탭바 네비게이션 클릭 이벤트 연동
+  const btnTabSearch = document.getElementById('btn-tab-search');
+  if (btnTabSearch) {
+    btnTabSearch.addEventListener('click', () => switchMainTab('praise-search'));
+  }
   
   // 전역 클릭 시 자동완성 드롭다운 바깥을 누르면 닫기
   document.addEventListener('click', (e) => {
@@ -3560,3 +3564,209 @@ function saveDevotionPost() {
 }
 
 // 댓글 기능 제거 완료
+
+// ==========================================================================
+// [찬양 검색 및 앱 내부 유튜브 모달 연동 엔진]
+// ==========================================================================
+
+// 공용 플로팅 토스트(Toast) 메시지 노출 함수
+function showToast(message) {
+  const toast = document.getElementById('toast-container');
+  if (!toast) return;
+  
+  toast.textContent = message;
+  toast.classList.add('show');
+  
+  // 2.2초 후에 페이드 아웃 처리
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2200);
+}
+
+// 앱 내부 유튜브 플레이어 모달 제어 함수
+function openYoutubePlayer(title, youtubeUrlOrSearchTitle) {
+  const modal = document.getElementById('youtube-player-modal');
+  const titleEl = document.getElementById('youtube-player-title');
+  const iframe = document.getElementById('youtube-iframe');
+  if (!modal || !iframe || !titleEl) return;
+  
+  // 유튜브 영상이 존재하지 않거나 빈 스트링인 경우 처리
+  if (!youtubeUrlOrSearchTitle || youtubeUrlOrSearchTitle.trim() === "") {
+    alert('등록된 영상이 없습니다.');
+    return;
+  }
+
+  titleEl.textContent = title;
+  let embedUrl = "";
+  
+  // 1. 유효한 유튜브 재생 URL인 경우 비디오 ID 파싱 시도
+  if (youtubeUrlOrSearchTitle.includes('youtube.com') || youtubeUrlOrSearchTitle.includes('youtu.be')) {
+    let videoId = "";
+    try {
+      if (youtubeUrlOrSearchTitle.includes('youtu.be/')) {
+        videoId = youtubeUrlOrSearchTitle.split('youtu.be/')[1].split('?')[0].split('&')[0];
+      } else if (youtubeUrlOrSearchTitle.includes('v=')) {
+        videoId = youtubeUrlOrSearchTitle.split('v=')[1].split('&')[0];
+      } else if (youtubeUrlOrSearchTitle.includes('embed/')) {
+        videoId = youtubeUrlOrSearchTitle.split('embed/')[1].split('?')[0].split('&')[0];
+      }
+    } catch (e) {
+      console.error("유튜브 ID 추출 실패:", e);
+    }
+    
+    if (videoId) {
+      embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    }
+  }
+  
+  // 2. 유튜브 URL이 아니거나 ID 추출 실패 시 검색어 임베드 기능 활용
+  if (!embedUrl) {
+    embedUrl = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(youtubeUrlOrSearchTitle)}&autoplay=1`;
+  }
+  
+  iframe.src = embedUrl;
+  modal.classList.add('active');
+}
+
+function closeYoutubePlayer() {
+  const modal = document.getElementById('youtube-player-modal');
+  const iframe = document.getElementById('youtube-iframe');
+  if (modal) modal.classList.remove('active');
+  if (iframe) iframe.src = ""; // 사운드 중단
+}
+
+// 실시간 찬양 검색 디바운스 인풋 핸들러
+let searchDebounceTimeout = null;
+
+function handlePraiseSearchInput() {
+  if (searchDebounceTimeout) {
+    clearTimeout(searchDebounceTimeout);
+  }
+  
+  searchDebounceTimeout = setTimeout(() => {
+    performPraiseSearch();
+  }, 300); // 300ms 디바운스 준수
+}
+
+// 찬양 검색 실행 함수
+function performPraiseSearch() {
+  const searchInput = document.getElementById('praise-search-input');
+  const resultsContainer = document.getElementById('praise-search-results');
+  if (!searchInput || !resultsContainer) return;
+  
+  const query = searchInput.value.trim().toLowerCase();
+  
+  // 검색어가 비어 있으면 예쁜 초기 가이드 문구 출력
+  if (!query) {
+    resultsContainer.innerHTML = `
+      <div class="empty-state" style="padding: 40px 10px;">
+        <i class="fa-solid fa-music empty-icon" style="color: #cbd5e1; font-size: 2.2rem; margin-bottom: 8px;"></i>
+        <p style="font-size: 0.8125rem; font-weight: 700; color: var(--text-sub);">찾으시는 찬양 제목을 입력하세요.</p>
+        <p class="empty-sub" style="font-size: 0.72rem;">로컬 데이터베이스에서 즉시 곡을 매칭합니다.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // 로컬 200곡 데이터베이스에서 찬양 제목 부분 검색 (대소문자 무시)
+  const matchedSongs = localPraiseDB.filter(song => 
+    song.title && song.title.toLowerCase().includes(query)
+  );
+  
+  if (matchedSongs.length === 0) {
+    resultsContainer.innerHTML = `
+      <div class="empty-state" style="padding: 45px 10px; background: rgba(0,0,0,0.01); border: 1px dashed var(--border); border-radius: var(--radius-md);">
+        <div style="font-size: 2rem; margin-bottom: 6px;">🎵</div>
+        <p style="font-size: 0.8125rem; font-weight: 700; color: var(--text-sub);">검색 결과가 없습니다.</p>
+        <p class="empty-sub" style="font-size: 0.72rem;">검색어를 확인하거나 단어를 축소해 보세요.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  resultsContainer.innerHTML = '';
+  
+  matchedSongs.forEach(song => {
+    const card = document.createElement('div');
+    card.className = 'search-result-card';
+    
+    const bpmVal = song.bpm || '80';
+    const keyVal = song.key || 'C';
+    const artistVal = song.artist ? ` - ${song.artist}` : '';
+    const youtubeParam = `${song.title} ${song.artist || ''}`;
+    
+    // 유튜브 보기 버튼 (보라색), 콘티 추가 버튼 (파란색)
+    card.innerHTML = `
+      <div class="search-card-header">
+        <span class="search-card-title">${escapeHtml(song.title)}<span style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">${escapeHtml(artistVal)}</span></span>
+        <div class="search-card-meta">
+          <span class="search-card-key">${escapeHtml(keyVal)}</span>
+          <span class="search-card-bpm">♩ ${escapeHtml(bpmVal)}</span>
+        </div>
+      </div>
+      <div class="search-card-actions">
+        <button type="button" class="btn-youtube-view" onclick="openYoutubePlayer('${escapeHtml(song.title.replace(/'/g, "\\'"))}', '${escapeHtml(youtubeParam.replace(/'/g, "\\'"))}')">
+          <i class="fa-solid fa-play"></i> ▶ 유튜브 보기
+        </button>
+        <button type="button" class="btn-praise-add-conti" onclick="addPraiseToCurrentConti(${JSON.stringify(song).replace(/"/g, '&quot;')})">
+          <i class="fa-solid fa-plus"></i> ➕ 콘티 추가
+        </button>
+      </div>
+    `;
+    resultsContainer.appendChild(card);
+  });
+}
+
+// 검색 모달 내의 찬양을 현재 활성화된 예배/주차 콘티에 즉시 추가
+function addPraiseToCurrentConti(songObj) {
+  const church = db.churches[db.activeChurchId];
+  if (!church) return;
+  
+  // 현재 선택된 예배 아이디 확인
+  const currentWorshipId = state.selectedServiceId;
+  if (!currentWorshipId) {
+    alert('먼저 메인 화면에서 예배(2부, 3부 등)를 선택한 뒤 곡을 추가해 주세요!');
+    return;
+  }
+  
+  const worship = church.worships[currentWorshipId];
+  if (!worship) return;
+  
+  // 디폴트 주차는 이번주(this-week)
+  const currentWeekId = state.selectedWeekId || 'this-week';
+  if (!worship.weeks) worship.weeks = {};
+  if (!worship.weeks[currentWeekId]) {
+    worship.weeks[currentWeekId] = { items: [] };
+  }
+  
+  const week = worship.weeks[currentWeekId];
+  if (!week.items) week.items = [];
+  
+  // 곡 오브젝트 규격 변환
+  const newContiSong = {
+    title: songObj.title,
+    key: songObj.key || 'C',
+    bpm: songObj.bpm || '80',
+    memo: songObj.reason || '', // 기본 추천 이유를 메모로 지정
+    youtubeUrl: songObj.youtubeUrl || `https://www.youtube.com/results?search_query=${encodeURIComponent(songObj.title)}`,
+    sheetMusicBase64: null
+  };
+  
+  week.items.push(newContiSong);
+  
+  // DB 저장 및 클라우드 동기화 개시
+  saveDatabase();
+  
+  // 찬양 상세 리스트 화면이 활성화되어 있을 경우 UI 즉시 갱신
+  if (document.getElementById('screen-detail').classList.contains('active')) {
+    renderSongList();
+  }
+  
+  // Toast 알림 노출
+  showToast("콘티에 추가되었습니다.");
+}
+
+// 전역 스코프 인라인 바인딩 맵핑
+window.openYoutubePlayer = openYoutubePlayer;
+window.closeYoutubePlayer = closeYoutubePlayer;
+window.addPraiseToCurrentConti = addPraiseToCurrentConti;
