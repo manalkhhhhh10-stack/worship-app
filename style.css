@@ -624,11 +624,11 @@ body:not(.admin-mode) .role-badge {
 
 /* 메인 화면 하단 마진 및 예배 관리 컨트롤 */
 .main-content {
-  padding-bottom: 84px; /* 탭바 영역 확보 */
+  padding-bottom: calc(102px + env(safe-area-inset-bottom)); /* 탭바 영역 + 안전 영역 확보 */
 }
 
 body.admin-mode .main-content {
-  padding-bottom: 150px; /* 탭바 + 플로팅바 영역 확보 */
+  padding-bottom: calc(168px + env(safe-area-inset-bottom)); /* 탭바 + 플로팅바 + 안전 영역 확보 */
 }
 
 .worship-admin-controls,
@@ -652,7 +652,10 @@ body.admin-mode .notice-admin-controls {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 64px;
+  height: calc(82px + env(safe-area-inset-bottom));
+  min-height: 82px;
+  padding-top: 6px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -707,7 +710,7 @@ body.admin-mode .notice-admin-controls {
 
 /* 메인 화면 플로팅 액션바 위치 보정 (탭바 윗쪽에 부양시키기) */
 #admin-main-actions {
-  bottom: 64px !important;
+  bottom: calc(82px + env(safe-area-inset-bottom)) !important;
   border-radius: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.9) 30%);
 }
@@ -1386,4 +1389,62 @@ body.admin-mode .admin-actions {
     height: 85%;
     max-height: none;
   }
+}
+
+/* ==========================================================================
+   [5] 인트로 스플래시 화면 스타일
+   ========================================================================== */
+.splash-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0d0e15; /* 고급스러운 딥 블랙 네이비 */
+  z-index: 9999; /* 모든 화면의 최상단 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+  border-radius: inherit; /* 모바일 기기 모서리 둥근 값 상속 */
+}
+
+.splash-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash-screen video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 화면을 꽉 차게 */
+}
+
+/* 건너뛰기 스킵 버튼 */
+.btn-skip-splash {
+  position: absolute;
+  top: calc(18px + env(safe-area-inset-top));
+  right: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  z-index: 10000;
+}
+
+.btn-skip-splash:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
 }

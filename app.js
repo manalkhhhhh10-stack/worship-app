@@ -9,6 +9,7 @@ const state = {
   editingNoticeId: null,       // 현재 편집중인 공지사항 ID
   selectedSearchChurchId: null, // 검색창에서 선택된 로그인 대상 교회 ID
   uploadedSheetMusicBase64: null, // 파일 업로드 시 임시로 보관할 compressed Base64
+  uploadedTeamLogoBase64: null,  // 파일 업로드 시 임시로 보관할 로고 이미지 Base64
   aiCache: {},                  // AI 찬양 추천 결과 임시 인메모리 캐시 (속도 향상 마스터키)
   isLocalWriting: false,        // 로컬 데이터 저장 중 클라우드 롤백 충돌을 방지하는 동기화 락(Lock)
   userName: ""                  // 현재 로그인한 사용자의 실명
@@ -328,6 +329,16 @@ function startCloudSync(churchId) {
     // 로컬 메모리에 즉시 반영
     db.churches[churchId] = updatedChurch;
     localStorage.setItem('worship_liturgy_db', JSON.stringify(db));
+    
+    // 로고 실시간 동기화 갱신
+    const logoContainer = document.getElementById('main-logo-container');
+    if (logoContainer) {
+      if (updatedChurch.logo) {
+        logoContainer.innerHTML = `<img src="${updatedChurch.logo}" alt="로고" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      } else {
+        logoContainer.innerHTML = `<i class="fa-solid fa-music"></i>`;
+      }
+    }
     
     // 현재 열려 있는 화면(Screen)에 따라 실시간 UI 재랜더링
     if (state.currentScreen === 'main') {
@@ -833,6 +844,16 @@ function setSessionAndEnter(churchId, role) {
   const church = db.churches[churchId];
   if (church) {
     document.getElementById('app-title').textContent = church.teamName;
+    
+    // 교회 로고 동적 주입 로직
+    const logoContainer = document.getElementById('main-logo-container');
+    if (logoContainer) {
+      if (church.logo) {
+        logoContainer.innerHTML = `<img src="${church.logo}" alt="로고" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      } else {
+        logoContainer.innerHTML = `<i class="fa-solid fa-music"></i>`;
+      }
+    }
   }
   
   // 실명 뱃지 UI 갱신
@@ -2557,15 +2578,30 @@ function deleteSong(songId) {
 // 찬양팀 이름 수정 모달 제어
 function toggleTeamModal(show) {
   const modal = document.getElementById('team-name-modal');
+  const previewContainer = document.getElementById('logo-preview-container');
+  const previewImg = document.getElementById('logo-preview-img');
+  
   if (show) {
     const church = db.churches[db.activeChurchId];
     if (church) {
       document.getElementById('team-name-input').value = church.teamName || '';
+      
+      if (church.logo) {
+        state.uploadedTeamLogoBase64 = church.logo;
+        previewImg.src = church.logo;
+        previewContainer.style.display = 'block';
+      } else {
+        state.uploadedTeamLogoBase64 = null;
+        previewImg.src = '';
+        previewContainer.style.display = 'none';
+      }
     }
     modal.classList.add('active');
   } else {
     modal.classList.remove('active');
     document.getElementById('team-name-form').reset();
+    state.uploadedTeamLogoBase64 = null;
+    if (previewContainer) previewContainer.style.display = 'none';
   }
 }
 
@@ -2579,9 +2615,21 @@ function saveTeamName(event) {
   const church = db.churches[db.activeChurchId];
   if (church) {
     church.teamName = newName;
+    church.logo = state.uploadedTeamLogoBase64; // 로고 이미지 바인딩
+    
     saveDatabase();
     
     document.getElementById('app-title').textContent = newName;
+    
+    // UI 로고 영역 즉시 갱신
+    const logoContainer = document.getElementById('main-logo-container');
+    if (logoContainer) {
+      if (church.logo) {
+        logoContainer.innerHTML = `<img src="${church.logo}" alt="로고" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      } else {
+        logoContainer.innerHTML = `<i class="fa-solid fa-music"></i>`;
+      }
+    }
   }
   
   toggleTeamModal(false);
@@ -2662,6 +2710,49 @@ function initDragAndDrop() {
 // [이벤트 리스너 및 돔 로드 핸들러]
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  
+  // [NEW] 0. 인트로 스플래시 화면 비디오 제어 및 자동 해제
+  const splashScreen = document.getElementById('splash-screen');
+  const splashVideo = document.getElementById('splash-video');
+  const skipBtn = document.getElementById('btn-skip-splash');
+
+  function hideSplash() {
+    if (splashScreen && !splashScreen.classList.contains('fade-out')) {
+      splashScreen.classList.add('fade-out');
+      // 비디오 정지 처리
+      if (splashVideo) {
+        splashVideo.pause();
+      }
+      // 0.4초 뒤 완전 제거
+      setTimeout(() => {
+        splashScreen.style.display = 'none';
+      }, 400);
+    }
+  }
+
+  if (splashScreen && splashVideo) {
+    // 모바일 브라우저 강제 재생 시작 시도
+    splashVideo.play().catch(err => {
+      console.warn("Autoplay was blocked by browser policy. User gesture needed:", err);
+    });
+
+    // 4.5초 뒤 자동 페이드 아웃 강제 해제 (인트로 영상이 3~4초 분량이므로 넉넉히 대기)
+    const splashTimeout = setTimeout(hideSplash, 4500);
+
+    // 비디오 재생이 1.8초보다 일찍 끝나면 즉시 퇴장
+    splashVideo.addEventListener('ended', () => {
+      clearTimeout(splashTimeout);
+      hideSplash();
+    });
+
+    // 스킵 버튼을 누르면 즉시 해제
+    if (skipBtn) {
+      skipBtn.addEventListener('click', () => {
+        clearTimeout(splashTimeout);
+        hideSplash();
+      });
+    }
+  }
   
   // 1. 데이터베이스 및 세션 확인
   initDatabase();
@@ -2818,6 +2909,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
+  // 대표 로고 이미지 업로드 및 압축 변환 바인딩
+  const teamLogoInput = document.getElementById('team-logo-input');
+  if (teamLogoInput) {
+    teamLogoInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const compressedBase64 = await compressImage(file);
+        state.uploadedTeamLogoBase64 = compressedBase64;
+        
+        const previewContainer = document.getElementById('logo-preview-container');
+        const previewImg = document.getElementById('logo-preview-img');
+        previewImg.src = compressedBase64;
+        previewContainer.style.display = 'block';
+      } catch (err) {
+        alert('로고 이미지 변환에 실패했습니다: ' + err.message);
+        e.target.value = '';
+      }
+    });
+  }
+
+  // 대표 로고 이미지 삭제 바인딩
+  const btnDeleteLogo = document.getElementById('btn-delete-logo');
+  if (btnDeleteLogo) {
+    btnDeleteLogo.addEventListener('click', () => {
+      state.uploadedTeamLogoBase64 = null;
+      document.getElementById('team-logo-input').value = '';
+      document.getElementById('logo-preview-container').style.display = 'none';
+    });
+  }
+
   // 18. 찬양팀명 편집 모달 닫기 바인딩
   document.getElementById('btn-close-team-modal').addEventListener('click', () => toggleTeamModal(false));
   document.getElementById('btn-cancel-team-modal').addEventListener('click', () => toggleTeamModal(false));
@@ -3365,25 +3488,10 @@ function renderDevotionTab() {
       gap: 10px;
     `;
     
-    // 댓글 목록 빌드
-    const commentsList = post.comments || [];
-    let commentsHtml = '';
-    
-    if (commentsList.length > 0) {
-      commentsHtml = `
-        <div class="comments-box" style="margin-top: 6px; background: var(--bg-main); border-radius: var(--radius-sm); padding: 8px 10px; border: 1px solid rgba(229,231,235,0.5); display: flex; flex-direction: column; gap: 6px;">
-          ${commentsList.map(cmt => `
-            <div style="font-size: 0.75rem; line-height: 1.4; border-bottom: 1px dashed rgba(0,0,0,0.03); padding-bottom: 4px; margin-bottom: 2px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                <span style="font-weight: 700; color: var(--text-sub); font-size: 0.72rem;">${escapeHtml(cmt.authorName)}</span>
-                <span style="font-size: 0.625rem; color: var(--text-muted);">${cmt.time}</span>
-              </div>
-              <div style="color: var(--text-main); font-weight: 500; padding-left: 2px;">${escapeHtml(cmt.content)}</div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
+    // 출석 완료 뱃지는 오직 관리자만 볼 수 있도록 제어
+    const attendanceBadgeHtml = db.activeRole === 'admin'
+      ? `<span style="font-size: 0.65rem; background: #10b981; color: #fff; padding: 1px 5px; border-radius: 8px; font-weight: 700;">출석완료</span>`
+      : '';
     
     card.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -3391,23 +3499,12 @@ function renderDevotionTab() {
           <span style="font-size: 0.78rem; font-weight: 700; color: #4f46e5; background: rgba(99,102,241,0.08); padding: 2px 7px; border-radius: var(--radius-sm); border: 1px solid rgba(99,102,241,0.15); display: inline-flex; align-items: center; gap: 3px;">
             <i class="fa-regular fa-user" style="font-size: 0.65rem;"></i> ${escapeHtml(post.authorName)}
           </span>
-          <span style="font-size: 0.65rem; background: #10b981; color: #fff; padding: 1px 5px; border-radius: 8px; font-weight: 700;">출석완료</span>
+          ${attendanceBadgeHtml}
         </div>
         <span style="font-size: 0.6875rem; color: var(--text-muted); font-weight: 500;"><i class="fa-regular fa-clock"></i> ${post.time}</span>
       </div>
       
       <p style="font-size: 0.8125rem; font-weight: 500; color: var(--text-main); line-height: 1.55; white-space: pre-wrap; margin: 0; padding: 4px 0;">${escapeHtml(post.content)}</p>
-      
-      <!-- 댓글 목록 영역 -->
-      ${commentsHtml}
-      
-      <!-- 댓글 입력창 -->
-      <div style="display: flex; gap: 6px; margin-top: 4px; align-items: center;">
-        <input type="text" id="comment-input-${post.id}" placeholder="따뜻한 댓글을 남겨보세요..." style="flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.75rem; outline: none; background: #ffffff; transition: border-color 0.2s;" onfocus="this.style.borderColor='#818cf8';" onblur="this.style.borderColor='var(--border)';">
-        <button type="button" onclick="saveDevotionComment('${post.id}')" style="background: #6366f1; border: none; color: #fff; width: 30px; height: 30px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#4f46e5';" onmouseout="this.style.backgroundColor='#6366f1';">
-          <i class="fa-solid fa-paper-plane" style="font-size: 0.72rem;"></i>
-        </button>
-      </div>
     `;
     
     feedContainer.appendChild(card);
@@ -3464,50 +3561,4 @@ function saveDevotionPost() {
   alert('샬롬! 오늘의 말씀 묵상 나눔과 출석체크가 모두 완료되었습니다. 🌟');
 }
 
-// 묵상글에 댓글 전송 등록
-function saveDevotionComment(postId) {
-  const church = db.churches[db.activeChurchId];
-  if (!church) return;
-  
-  if (!state.userName) {
-    alert('사용자 이름을 식별할 수 없습니다. 로그아웃 후 실명으로 재로그인해 주세요.');
-    return;
-  }
-  
-  const inputEl = document.getElementById(`comment-input-${postId}`);
-  if (!inputEl) return;
-  
-  const commentVal = inputEl.value.trim();
-  if (!commentVal) {
-    alert('댓글 내용을 입력하세요!');
-    return;
-  }
-  
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const date = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${year}-${month}-${date}`;
-  
-  const timeStr = today.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-  
-  const posts = church.devotions[todayStr]?.posts || [];
-  const post = posts.find(p => p.id === postId);
-  
-  if (post) {
-    if (!post.comments) post.comments = [];
-    
-    post.comments.push({
-      id: 'comment-' + Date.now(),
-      authorName: state.userName,
-      content: commentVal,
-      time: timeStr
-    });
-    
-    saveDatabase();
-    renderDevotionTab();
-  }
-}
-
-// 인라인 onclick의 원활한 동적 바인딩을 위해 전역 스코프 맵핑
-window.saveDevotionComment = saveDevotionComment;
+// 댓글 기능 제거 완료
