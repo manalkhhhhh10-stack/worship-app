@@ -1449,6 +1449,131 @@ body.admin-mode .admin-actions {
   z-index: 10000;
 }
 
+/* 찬양 검색 결과 카드 및 토스트 스타일 */
+.search-result-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); /* 부드러운 그림자 효과 */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn var(--transition-normal);
+}
+
+.search-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-card-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.search-card-meta {
+  display: flex;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.search-card-key {
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.search-card-bpm {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.search-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* 보라색 유튜브 버튼 */
+.btn-youtube-view {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #8b5cf6; /* 보라색 */
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-youtube-view:hover {
+  background: #7c3aed;
+}
+
+/* 파란색 콘티 추가 버튼 */
+.btn-praise-add-conti {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #3b82f6; /* 파란색 */
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-praise-add-conti:hover {
+  background: #2563eb;
+}
+
+/* 토스트 팝업 메시지 */
+.toast-message {
+  position: absolute;
+  bottom: 85px; /* 탭바 바로 위 포지셔닝 */
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(17, 24, 39, 0.92);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #ffffff;
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  z-index: 999999 !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+
+.toast-message.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .btn-skip-splash:hover {
   background: rgba(255, 255, 255, 0.25);
   transform: scale(1.05);
