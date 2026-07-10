@@ -161,6 +161,7 @@ const localPraiseDB = [
   { title: '주님 내 길 예비하시니', artist: '복음성가', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님 내 길 예비하시니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '목마른 사슴', artist: '복음성가', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '목마른 사슴 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '주께 가오니', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주께 가오니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아름다우신', artist: '예수전도단', key: 'A', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '아름다우신 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '주의 임재 안에서', artist: '예수전도단', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '주의 임재 안에서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '나 무엇과도 주님을', artist: '어노인팅', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나 무엇과도 주님을 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '나 주님이 더욱 필요해', artist: '어노인팅', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나 주님이 더욱 필요해 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
@@ -186,14 +187,34 @@ const localPraiseDB = [
   { title: '공감하시네', artist: '위러브', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '공감하시네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '밝은 빛을 비추시네', artist: '위러브', key: 'D', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '밝은 빛을 비추시네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '공급자', artist: '위러브', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '공급자 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '모든 열방 주 볼 때까지', artist: '예수전도단', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '모든 열방 주 볼 때까지 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '호산나', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '호산나 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '손을 높이 들고', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '손을 높이 들고 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '기뻐하며 왕께 노래하며', artist: '예수전도단', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '기뻐하며 왕께 노래하며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 사랑이 온 세상에', artist: '예수전도단', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '주 사랑이 온 세상에 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜로다', artist: '예수전도단', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '은혜로다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아바 아버지', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '아바 아버지 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '시선', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '시선 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '성령이 오셨네', artist: '김도현', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '성령이 오셨네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '우리는 주의 움직이는 교회', artist: '소진영', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '우리는 주의 움직이는 교회 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜', artist: '손경민', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '은혜 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '행복', artist: '손경민', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '행복 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '감사', artist: '손경민', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '감사 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '동행', artist: '손경민', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '동행 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '그가 아시나니', artist: '손경민', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '그가 아시나니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 인도하셨네', artist: '손경민', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 인도하셨네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '길', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '길 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜를 아는 자', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '은혜를 아는 자 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님이 하십니다', artist: '손경민', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님이 하십니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '주의 은혜로 오직 살아가네', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주의 은혜로 오직 살아가네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '광야를 지나며', artist: '히즈윌', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '광야를 지나며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '믿음이 없이는', artist: '히즈윌', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '믿음이 없이는 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '하루', artist: '히즈윌', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하루 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '주님은 너를 만드신 분', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님은 너를 만드신 분 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '괴로울 때 주님의 얼굴 보라', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '괴로울 때 주님의 얼굴 보라 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '좋으신 하나님', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '좋으신 하나님 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 힘이 되신 여호와여', artist: '복음성가', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 힘이 되신 여호와여 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 삶은 주의 것', artist: '김명선', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 삶은 주의 것 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '또 하나의 열매를 바라시며', artist: '이율구', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '또 하나의 열매를 바라시며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '사명', artist: '동방현주', key: 'Em', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '사명 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '내게 강 같은 평화', artist: '복음성가', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '내게 강 같은 평화 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
@@ -201,6 +222,8 @@ const localPraiseDB = [
   { title: '당신은 사랑받기 위해 태어난 사람', artist: '이율구', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '당신은 사랑받기 위해 태어난 사람 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '그 사랑', artist: '마커스워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '그 사랑 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '주님 다시 오실 때까지', artist: '소향', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님 다시 오실 때까지 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '사명', artist: '동방현주', key: 'Em', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '사명 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '또 하나의 열매를 바라시며', artist: '이율구', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '또 하나의 열매를 바라시며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '주님의 은혜 넘치네', artist: '복음성가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님의 은혜 넘치네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '내 주를 가까이 하게 함은', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 주를 가까이 하게 함은 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '나 같은 죄인 살리신', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나 같은 죄인 살리신 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
@@ -217,9 +240,30 @@ const localPraiseDB = [
   { title: '빛의 사자들이여', artist: '찬송가', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '빛의 사자들이여 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '예수 십자가에 흘린 피로써', artist: '찬송가', key: 'Ab', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '예수 십자가에 흘린 피로써 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '주 하나님 지으신 모든 세계', artist: '찬송가', key: 'Bb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 하나님 지으신 모든 세계 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '왕이신 나의 하나님', artist: '복음성가', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '왕이신 나의 하나님 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '주 여호와는 광대하시도다', artist: '복음성가', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 여호와는 광대하시도다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '좋으신 하나님', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '좋으신 하나님 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 힘이 되신 여호와여', artist: '복음성가', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 힘이 되신 여호와여 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 삶은 주의 것', artist: '김명선', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 삶은 주의 것 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '내 이름 아시죠', artist: '디사이플스', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 이름 아시죠 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님과 같이 (There Is None Like You)', artist: '복음성가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님과 같이 (There Is None Like You) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '누군가 널 위해 기도하네', artist: '복음성가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '누군가 널 위해 기도하네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '괴로울 때 주님의 얼굴 보라', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '괴로울 때 주님의 얼굴 보라 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님은 너를 만드신 분', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님은 너를 만드신 분 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 등 뒤에서', artist: '김명선', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 등 뒤에서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '하나님은 너를 지키시는 자', artist: '한스밴드', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하나님은 너를 지키시는 자 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '기대', artist: '워킹', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '기대 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '소원', artist: '한웅재', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '소원 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '야곱의 축복', artist: '소리엘', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '야곱의 축복 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 열방의 소망', artist: '소리엘', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 열방의 소망 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주가 일하시네', artist: '김브라이언', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주가 일하시네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '성령이 오셨네', artist: '김도현', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '성령이 오셨네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 예수', artist: '김윤진', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 예수 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '충만', artist: '지선', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '충만 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '하나님의 부르심', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하나님의 부르심 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나는 주를 섬기는 것에 후회가 없습니다', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나는 주를 섬기는 것에 후회가 없습니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '실로암', artist: '피아워십', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '실로암 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '이 말씀 앞에서', artist: '예람워십', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '이 말씀 앞에서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '하나님의 은혜', artist: '피아워십', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하나님의 은혜 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '나의 하나님 (El Shaddai)', artist: '피아워십', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 하나님 (El Shaddai) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '꽃들도', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '꽃들도 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
@@ -242,9 +286,39 @@ const localPraiseDB = [
   { title: '예수 따라가며', artist: '찬송가', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 따라가며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '구주와 함께 나 죽었으니', artist: '찬송가', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '구주와 함께 나 죽었으니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '예수 나를 위하여', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 나를 위하여 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '오직 예수', artist: '디사이플스', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '오직 예수 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 한 분만으로', artist: '디사이플스', key: 'A', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '주 한 분만으로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 마음을 (Refiner\'s Fire)', artist: '디사이플스', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 마음을 (Refiner\'s Fire) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 보혈 날 씻었네', artist: '디사이플스', key: 'D', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '주 보혈 날 씻었네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '약한 나로 강하게', artist: '어노인팅', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '약한 나로 강하게 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '목마른 사슴이 시냇물을', artist: '복음성가', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '목마른 사슴이 시냇물을 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주께 가오니', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주께 가오니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '목마른 사슴', artist: '복음성가', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '목마른 사슴 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 구주 예수님 (Shout to the Lord)', artist: '힐송', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 구주 예수님 (Shout to the Lord) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '호산나 (Hosanna)', artist: '힐송', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '호산나 (Hosanna) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 아름다움으로', artist: '예수전도단', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '주의 아름다움으로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 임재 안에서', artist: '예수전도단', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '주의 임재 안에서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '모든 열방 주 볼 때까지', artist: '예수전도단', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '모든 열방 주 볼 때까지 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '손을 높이 들고', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '손을 높이 들고 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '기뻐하며 왕께 노래하며', artist: '예수전도단', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '기뻐하며 왕께 노래하며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 사랑이 온 세상에', artist: '예수전도단', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '주 사랑이 온 세상에 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아바 아버지', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '아바 아버지 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜로다', artist: '예수전도단', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '은혜로다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '시선', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '시선 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
   { title: '마지막 날에', artist: '예수전도단', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '마지막 날에 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아름다우신', artist: '예수전도단', key: 'A', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '아름다우신 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님 내 길 예비하시니', artist: '복음성가', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님 내 길 예비하시니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '믿음이 없이는', artist: '히즈윌', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '믿음이 없이는 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '하루', artist: '히즈윌', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하루 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '길', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '길 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '동행', artist: '손경민', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '동행 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '감사', artist: '손경민', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '감사 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 은혜로 오직 살아가네', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주의 은혜로 오직 살아가네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '그가 아시나니', artist: '손경민', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '그가 아시나니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜를 아는 자', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '은혜를 아는 자 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님이 하십니다', artist: '손경민', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님이 하십니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
 ];
+
 
 
 
@@ -2105,7 +2179,9 @@ function deleteHistoryLiturgy(event, archiveId) {
 // ==========================================================================
 
 // 화면 전환 함수
-function navigateTo(screenId, serviceId = null, weekId = null) {
+function navigateTo(screenId, serviceId = null, weekId = null, isFromPopState = false) {
+  state.currentScreen = screenId;
+  
   state.currentScreen = screenId;
   
   const screenAuth = document.getElementById('screen-auth');
@@ -2158,6 +2234,18 @@ function navigateTo(screenId, serviceId = null, weekId = null) {
     renderSongDetailHeader();
     renderSongList();
     screenDetail.classList.add('active');
+  }
+  
+  if (!isFromPopState) {
+    try {
+      history.pushState({
+        screenId: screenId,
+        serviceId: serviceId,
+        weekId: weekId
+      }, "", "");
+    } catch (err) {
+      console.warn("History pushState failed: ", err);
+    }
   }
 }
 
@@ -2717,6 +2805,12 @@ function initDragAndDrop() {
 // [이벤트 리스너 및 돔 로드 핸들러]
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  // KakaoTalk In-App Browser Auto-Exit Guard (Bypasses KakaoTalk back-button termination issue)
+  var ua = navigator.userAgent.toLowerCase();
+  if (ua.indexOf("kakaotalk") > -1) {
+    window.location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(window.location.href);
+    return;
+  }
   
   // [NEW] 0. 인트로 스플래시 화면 비디오 제어 및 자동 해제
   const splashScreen = document.getElementById('splash-screen');
@@ -2767,7 +2861,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // 1. 데이터베이스 및 세션 확인
+  // 1. ?곗씠?곕쿋?댁뒪 諛??몄뀡 ?뺤씤
   initDatabase();
+  
+  try {
+    history.replaceState({
+      screenId: state.currentScreen,
+      serviceId: state.selectedServiceId,
+      weekId: state.selectedWeekId
+    }, "", "");
+  } catch (e) {}
+  
+  window.addEventListener("popstate", (event) => {
+    if (event.state) {
+      var sState = event.state;
+      navigateTo(sState.screenId, sState.serviceId, sState.weekId, true);
+    }
+  });
   
   // 2. 인증 화면 실시간 검색 바인딩
   document.getElementById('auth-search-input').addEventListener('input', searchChurches);
@@ -3652,7 +3762,7 @@ function showToast(message) {
 // 앱 내부 유튜브 플레이어 모달 제어 함수
 function openYoutubePlayer(title, youtubeUrlOrSearchTitle) {
   if (!youtubeUrlOrSearchTitle || youtubeUrlOrSearchTitle.trim() === "") {
-    alert("?깅줉???곸긽 ?뺣낫媛 ?놁뒿?덈떎.");
+    alert("No video registered.");
     return;
   }
   
@@ -3671,7 +3781,7 @@ function openYoutubePlayer(title, youtubeUrlOrSearchTitle) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    showToast("?좏뒠釉뚮줈 ?덉쟾?섍쾶 ?곌껐?덉뒿?덈떎.");
+    showToast("Launching YouTube...");
   } catch (err) {
     window.location.href = targetUrl;
   }
