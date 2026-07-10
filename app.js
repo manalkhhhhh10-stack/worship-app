@@ -12,7 +12,8 @@ const state = {
   uploadedTeamLogoBase64: null,  // 파일 업로드 시 임시로 보관할 로고 이미지 Base64
   aiCache: {},                  // AI 찬양 추천 결과 임시 인메모리 캐시 (속도 향상 마스터키)
   isLocalWriting: false,        // 로컬 데이터 저장 중 클라우드 롤백 충돌을 방지하는 동기화 락(Lock)
-  userName: ""                  // 현재 로그인한 사용자의 실명
+  userName: "",                 // 현재 로그인한 사용자의 실명
+  selectedDevotionDate: null    // 묵상 탭에서 선택된 날짜 (어제/오늘 묵상 히스토리 타임라인용)
 };
 
 // 텅 빈 예배 데이터 구조 생성 템플릿 (사용자가 처음부터 직접 예배를 등록해서 사용하도록 텅 빈 구조 지원)
@@ -72,231 +73,180 @@ const demoNotices = {
 
 // 20년 경력 예배 디렉터 지식 베이스 찬양 DB (AI 시뮬레이션용 - 54곡 대폭 확장)
 const localPraiseDB = [
-  { title: "사랑한다 말하시네", artist: "기프티드 (Gifted Worship)", key: "C", bpm: "slow", mood: "calm", target: "youth", themes: ["comfort", "grace"], reason: "언제나 나를 사랑한다 말씀해 주시는 주님의 위로가 마음에 깊이 닿는 곡입니다." },
-  { title: "주 예수 나의 당신이여", artist: "기프티드 (Gifted Worship)", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "주님만을 사랑하는 일편단심 예배자의 절절한 연모와 고백을 장중히 전달합니다." },
-  { title: "가장 빛나는 별", artist: "기프티드 (Gifted Worship)", key: "A", bpm: "slow", mood: "calm", target: "youth", themes: ["comfort", "thanks"], reason: "내 영혼의 가장 빛나는 새벽 별이 되시는 예수를 기쁘고 영롱하게 고백합니다." },
-  { title: "그가 내 안에", artist: "기프티드 (Gifted Worship)", key: "G", bpm: "medium", mood: "grand", target: "adult", themes: ["grace", "worship"], reason: "주께서 내 안에 거하시고 내가 주 안에 거하는 깊은 연합의 감격을 누리게 합니다." },
-  { title: "내 진정 사모하는 (찬송가 88장)", artist: "기프티드 (Gifted Worship)", key: "F", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "기존 찬송가를 기프티드 고유의 시원하고 모던한 밴드 리듬 사운드로 역동감 있게 표현했습니다." },
-  { title: "꽃들도", artist: "피아워십 (FIA Worship)", key: "G", bpm: "medium", mood: "bright", target: "child", themes: ["thanks", "worship"], reason: "이 땅의 모든 꽃들과 자연이 구주 예수를 소리 높여 대찬양함을 사랑스럽게 노래합니다." },
-  { title: "사랑하셔서 오시었네", artist: "피아워십 (FIA Worship)", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "낮고 천한 나를 위해 하늘 보좌 버리고 내려오신 십자가 사랑의 깊이를 기억합니다." },
-  { title: "요게벳의 노래", artist: "피아워십 (FIA Worship)", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "어머니의 눈물 어린 위탁과 기도를 담은 피아워십 특유의 따뜻하고 감정선 짙은 CCM입니다." },
-  { title: "내 영혼이 따뜻한 예배를", artist: "피아워십 (FIA Worship)", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "기교와 형식을 버리고 온전히 영과 진리로 주님만을 따뜻하게 예배하도록 인도합니다." },
-  { title: "목마른 사슴", artist: "찬송가 편곡", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "comfort"], reason: "시편 말씀을 바탕으로 주님만을 갈급하게 사모하는 목마름을 서정적인 멜로디로 연출합니다." },
-  { title: "나의 약함은 나의 자랑이요", artist: "피아워십 (FIA Worship)", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "나의 연약함을 자랑하며 주님의 일하심을 잔잔한 고백으로 높여 드립니다." },
-  { title: "하나님의 은혜", artist: "피아워십 (FIA Worship)", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "thanks"], reason: "한량없는 주님의 은혜를 따뜻하고 깊은 보컬 하모니로 은혜롭게 나눕니다." },
-  { title: "내 모든 삶 행동 주 안에", artist: "피아워십 (FIA Worship)", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "경쾌한 템포에 맞춰 매일의 삶 속에서 주를 예배함을 신나게 선포합니다." },
-  { title: "나의 하나님 (El Shaddai)", artist: "피아워십 (FIA Worship)", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "전능하신 나의 하나님을 피아워십 특유의 따뜻하고 웅장한 사운드로 노래합니다." },
-  { title: "예수 사랑하심은 (피아 메들리)", artist: "피아워십 (FIA Worship)", key: "Eb", bpm: "slow", mood: "calm", target: "child", themes: ["grace", "comfort"], reason: "가장 기본적인 찬송가 멜로디를 부드러운 아쿠스틱 기타 반주와 연결해 노래합니다." },
-  { title: "주를 위한 이곳에", artist: "기프티드 (Gifted Worship)", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "오직 주님 한 분만 예배하는 예배자의 참된 태도를 깊이 다짐하게 돕는 곡입니다." },
-  { title: "내 눈 주의 영광을 보네", artist: "기프티드 (Gifted Worship)", key: "G", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "이 땅의 회복과 부흥을 노래하며 다 함께 일어서는 찬양의 파도를 만듭니다." },
-  { title: "나의 피난처 예수", artist: "기프티드 (Gifted Worship)", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "어려운 상황 속에서도 피난처 되신 예수님만을 의지하는 감격의 고백입니다." },
-  { title: "주님은 산 같아서", artist: "기프티드 (Gifted Worship)", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "흔들리지 않는 영원한 요새와 같으신 주님의 사랑을 잔잔하게 신뢰하게 합니다." },
-  { title: "그 사랑 얼마나", artist: "기프티드 (Gifted Worship)", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "헤아릴 수 없는 그 십자가 사랑의 너비와 높이를 묵상하는 따뜻한 찬양입니다." },
-  { title: "만 입이 내게 있으면 (찬송가 23장)", artist: "찬송가 편곡", key: "A", bpm: "fast", mood: "bright", target: "adult", themes: ["worship", "thanks"], reason: "내 모든 입을 열어 구주 예수의 이름을 높이며 찬양의 문을 여는 기쁜 오프닝곡입니다." },
-  { title: "구주 예수 의지함이 (찬송가 542장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "adult", themes: ["grace", "comfort"], reason: "예수님만을 전적으로 신뢰하는 자에게 평안과 은혜가 흘러넘침을 경쾌하게 선포합니다." },
-  { title: "아 하나님의 은혜로 (찬송가 310장)", artist: "찬송가 편곡", key: "D", bpm: "medium", mood: "calm", target: "adult", themes: ["grace", "thanks"], reason: "내가 믿고 또 의지하는 주님의 신실하심을 모던한 포크 편곡으로 기쁘게 노래합니다." },
-  { title: "오 신실 하신 주 (찬송가 393장)", artist: "찬송가 편곡", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "변함없이 매일의 필요를 자비로 채우시는 하나님을 장중하게 경배합니다." },
-  { title: "내 평생에 가는 길 (찬송가 413장)", artist: "찬송가 편곡", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "어떤 고난과 풍파 속에서도 내 영혼 평안해, 소망의 고백을 묵상하는 위대한 찬송입니다." },
-  { title: "시간을 뚫고", artist: "위러브 (WELOVE)", key: "A", bpm: "medium", mood: "calm", target: "youth", themes: ["worship", "grace"], reason: "예배의 시작 단계에서 하나님의 임재를 잔잔히 선포하기에 최적의 모던 CCM 고백입니다." },
-  { title: "공감하시네", artist: "위러브 (WELOVE)", key: "G", bpm: "slow", mood: "calm", target: "youth", themes: ["grace", "comfort"], reason: "회중의 아픔을 공감하시는 주님의 사랑을 고백하며, 잔잔하고 묵상하는 흐름에 강력한 감동을 줍니다." },
-  { title: "밝은 빛을 비추시네", artist: "위러브 (WELOVE)", key: "D", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "밝고 활기찬 신디사이저 리드에 맞춰 기쁨으로 예배의 문을 열기 좋은 댄스 업템포 찬양입니다." },
-  { title: "영원한 사귐으로", artist: "위러브 (WELOVE)", key: "D", bpm: "medium", mood: "calm", target: "youth", themes: ["worship", "grace"], reason: "삼위 하나님과의 교제를 묵상하며 온 공동체가 하나 됨을 고백하기 좋습니다." },
-  { title: "고백", artist: "위러브 (WELOVE)", key: "A", bpm: "slow", mood: "calm", target: "youth", themes: ["grace", "decision"], reason: "주님을 향한 나의 진실한 마음을 고백하며, 깊은 임재 속으로 들어가는 곡입니다." },
-  { title: "낮은 곳으로", artist: "위러브 (WELOVE)", key: "G", bpm: "medium", mood: "calm", target: "youth", themes: ["grace", "comfort"], reason: "낮고 소외된 곳에 찾아오신 주님의 사랑을 기억하는 따뜻한 찬양입니다." },
-  { title: "나의 왕 나의 주", artist: "위러브 (WELOVE)", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["worship", "thanks"], reason: "빠른 리듬 속에 주님을 왕으로 기쁘게 대관하며 힘차게 부르는 찬양입니다." },
-  { title: "여호와께 돌아가자", artist: "제이어스 (J-US)", key: "F", bpm: "medium", mood: "grand", target: "youth", themes: ["decision", "grace"], reason: "십자가의 그 사랑을 깊이 묵상하고 결단으로 이어지는 중반 파트 흐름에 웅장한 브릿지 빌드업을 연출합니다." },
-  { title: "내 모습 이대로", artist: "제이어스 (J-US)", key: "F", bpm: "slow", mood: "calm", target: "youth", themes: ["grace", "comfort"], reason: "나를 있는 그대로 수용해 주시는 주님의 십자가 사랑을 묵상하는 부드러운 중보 기도용 찬양입니다." },
-  { title: "나의 슬픔을", artist: "제이어스 (J-US)", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "슬픔 대신 희락의 옷을 입히신 주님을 찬양하는 역동적이고 신나는 댄스 곡입니다." },
-  { title: "시편 139편 (나를 지으신)", artist: "제이어스 (J-US)", key: "G", bpm: "slow", mood: "calm", target: "youth", themes: ["grace", "comfort"], reason: "나를 완벽히 아시고 내 길을 인도하시는 신실하신 하나님을 깊이 묵상하게 합니다." },
-  { title: "보소서 주님", artist: "제이어스 (J-US)", key: "C", bpm: "medium", mood: "grand", target: "youth", themes: ["decision", "worship"], reason: "우리의 무너진 마음을 보시고 이 땅을 회복시키실 하나님을 바라보는 선포곡입니다." },
-  { title: "예배합니다 (완전한 사랑)", artist: "마커스워십", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "대예배의 도입부에서 차분하게 회중의 마음을 모아 예배에 전념하게 돕는 한국 교회 대표 묵상 찬양입니다." },
-  { title: "오직 예수 뿐이네", artist: "마커스워십", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "주님의 은혜가 없으면 단 하루도 살 수 없음을 고백하며 설교 전 은혜 분위기를 극대화합니다." },
-  { title: "그곳에서 시작되네", artist: "마커스워십", key: "E", bpm: "medium", mood: "grand", target: "youth", themes: ["decision", "worship"], reason: "예배의 결단 단계에서 강력한 드럼 사운드와 함께 기도의 열정을 깨우기 최적인 곡입니다." },
-  { title: "날 향한 계획", artist: "마커스워십", key: "G", bpm: "medium", mood: "bright", target: "youth", themes: ["thanks", "comfort"], reason: "내 삶의 여정이 하나님의 온전한 계획 속에 있음을 밝고 확신 있게 고백하는 찬양입니다." },
-  { title: "감사함으로", artist: "마커스워십", key: "E", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "문을 열며 감사함으로 궁정에 들어가 주 이름을 높이는 힘차고 빠른 장년/청년 공용 오프닝곡입니다." },
-  { title: "그가 다스리는 그의 나라가", artist: "마커스워십", key: "G", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "하나님의 다스림 and 통치하심을 정교한 밴드 편곡으로 고백하는 무게감 있는 찬양입니다." },
-  { title: "부르신 곳에서", artist: "마커스워십", key: "E", bpm: "medium", mood: "grand", target: "adult", themes: ["decision", "grace"], reason: "어떤 상황 속에서도 예배자로 서겠다는 헌신 and 다짐을 결단할 때 매우 효과적인 찬양입니다." },
-  { title: "대단한 믿음 없어도", artist: "마커스워십", key: "F", bpm: "medium", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "작은 일상에서 성실하게 주님을 따르겠다는 깊은 울림의 은혜 고백입니다." },
-  { title: "예수 피를 힘입어", artist: "어노인팅", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "거룩한 지성소로 나아가기 위한 참회와 예수님의 보혈 공로를 깊이 사모하는 전통적 대예배용 묵상곡입니다." },
-  { title: "온 땅의 주인", artist: "어노인팅", key: "G", bpm: "medium", mood: "grand", target: "adult", themes: ["worship", "comfort"], reason: "나는 비록 미약하지만 온 땅의 주인이 나를 아신다는 감격스러운 위로와 전능함을 선포하는 곡입니다." },
-  { title: "주를 경배 (나는 기쁨의 노래로)", artist: "어노인팅", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "박수 치며 기쁨의 선포로 온 회중의 고조된 감격과 감사를 이끌어내는 오프닝 찬양입니다." },
-  { title: "은혜 아래 있네", artist: "어노인팅", key: "G", bpm: "medium", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "어떤 폭풍우 속에서도 하나님의 은혜 날개 아래 안전함을 고백하는 평화로운 곡입니다." },
-  { title: "주 사랑이 나를 숨쉬게 해", artist: "어노인팅", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "자격 없는 나를 만지시고 숨 쉬게 하시는 주님의 은혜를 깊은 울림으로 고백합니다." },
-  { title: "내 마음을 가득 채운", artist: "어노인팅", key: "E", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "주님의 위대하심을 빠른 드라이브 톤 기타 반주에 맞추어 신나게 찬송하는 찬양입니다." },
-  { title: "아무것도 두려워 말라", artist: "어노인팅", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "마음에 염려와 불안이 있는 회중을 깊이 위로하는 잔잔한 피아노 위주의 묵상 찬양입니다." },
-  { title: "내 영혼은 안전합니다", artist: "어노인팅", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "내 삶의 모든 순간을 계획하신 주님 품에서 평안함을 찾는 소망의 노래입니다." },
-  { title: "주 품에 품으소서", artist: "어노인팅", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "worship"], reason: "거친 파도 날 향해 올 때 주와 함께 날아오르리라는 위대한 신뢰를 고백합니다." },
-  { title: "원하고 바라고 기도합니다", artist: "아이자야 씩스티원", key: "Eb", bpm: "medium", mood: "calm", target: "youth", themes: ["decision", "comfort"], reason: "청소년/청년 및 장년층까지 어우르며 다음 세대를 향한 약속과 소망을 결단하기에 최적화된 곡입니다." },
-  { title: "주님의 마음 있는 곳", artist: "아이자야 씩스티원", key: "G", bpm: "medium", mood: "grand", target: "youth", themes: ["decision", "worship"], reason: "주님의 마음이 있는 곳에 내 마음이 있기를 소망하는 깊은 위탁의 결단 고백입니다." },
-  { title: "은혜", artist: "손경민", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "thanks"], reason: "내가 누려왔던 모든 것이 하나님의 은혜였음을 되돌아보며 온 회중의 눈시울을 붉히는 명곡입니다." },
-  { title: "행복", artist: "손경민", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "하나님의 자녀로 살아가는 것 자체가 진정한 행복임을 고백하는 은혜로운 곡입니다." },
-  { title: "요게벳의 노래", artist: "염평안", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "부모 세대의 눈물 어린 신앙의 위탁과 자녀를 향한 하나님의 보호하심을 사모하는 고백입니다." },
-  { title: "아 하나님의 은혜로 (찬송가 310장)", artist: "찬송가 편곡", key: "D", bpm: "medium", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "익숙한 찬송가 멜로디에 모던한 코드를 입혀 장년층 회중의 몰입과 고백을 극대화합니다." },
-  { title: "주 예수보다 더 귀한 것은 없네", artist: "찬송가 편곡", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "worship"], reason: "세상 어떤 즐거움이나 명예보다 예수님이 가장 귀함을 고백하는 대표 결단 찬송입니다." },
-  { title: "주와 같이 길 가는 것 (찬송가 430장)", artist: "찬송가 편곡", key: "E", bpm: "medium", mood: "bright", target: "adult", themes: ["thanks", "decision"], reason: "한 걸음 한 걸음 주님과 동행하는 기쁨을 경쾌한 셔플 비트 편곡으로 노래하기 좋습니다." },
-  { title: "태산을 넘어 험곡에 가도 (찬송가 445장)", artist: "찬송가 편곡", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "comfort"], reason: "하늘의 영광이 내 영혼에 가득함을 기쁨의 박수와 밝고 신나는 템포로 선포합니다." },
-  { title: "슬픈 마음 있는 사람 (찬송가 91장)", artist: "찬송가 편곡", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "예수의 이름이 가진 능력과 평화를 신나는 세션 리듬에 맞춰 회중의 에너지를 돋웁니다." },
-  { title: "나는 예배자입니다", artist: "어노인팅", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "내가 서 있는 곳에서 주님을 예배하겠다는 영적인 기초를 다지는 쉬우면서도 깊은 고백입니다." },
-  { title: "예수 열방의 소망", artist: "소리엘", key: "A", bpm: "medium", mood: "grand", target: "adult", themes: ["worship", "comfort"], reason: "예수님이 온 열방의 참된 소망이심을 웅장한 브릿지 사운드와 함께 고백하는 대서사 찬양입니다." },
-  { title: "야곱의 축복", artist: "소리엘", key: "F", bpm: "medium", mood: "bright", target: "child", themes: ["thanks", "grace"], reason: "어린이 예배 및 주일학교 예배에서 사랑의 교제와 축복송으로 널리 불리는 영동적인 곡입니다." },
-  { title: "소원", artist: "한웅재", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "comfort"], reason: "삶의 한 절이라도 주님을 닮기 원하는 시적인 가사와 잔잔한 통기타 위주의 고백 찬양입니다." },
-  { title: "주가 일하시네", artist: "김브라이언", key: "C", bpm: "medium", mood: "grand", target: "adult", themes: ["decision", "comfort"], reason: "내 힘을 빼고 기도하며 나아갈 때 주님께서 신실히 일하심을 뜨겁게 빌드업하여 선포합니다." },
-  { title: "시선", artist: "예수전도단", key: "E", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "내 모든 시선을 주님께 드리고 살아계신 하나님을 묵상할 때 삶에 기적이 일어남을 선포합니다." },
-  { title: "아바 아버지", artist: "예수전도단", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "하나님을 친밀하게 아빠라 부르며 그 사랑의 품속에 거하는 평화로운 인도용 묵상곡입니다." },
-  { title: "은혜로다", artist: "예수전도단", key: "D", bpm: "medium", mood: "calm", target: "adult", themes: ["grace", "worship"], reason: "시작부터 흐르는 잔잔한 은혜의 물결 속에 온 땅에 주님의 은혜가 가득함을 기쁨으로 고백합니다." },
-  { title: "우리 때문에", artist: "옹기장이", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "절기 예배(부활절, 성탄절 등)나 깊은 참회의 시간에 십자가 희생의 크기를 묵상하게 돕습니다." },
-  { title: "하나님은 너를 지키시는 자", artist: "한스밴드", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "위로가 필요한 영혼들에게 하나님의 변함없는 지키심과 동행을 다정하게 들려주는 축복송입니다." },
-  { title: "기대", artist: "워킹", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "주님이 우리를 통해 새롭게 행하실 역사들을 소망하며 찬양팀과 회중이 교제하는 전통곡입니다." },
-  { title: "주의 자비가 내려와", artist: "디사이플스", key: "D", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "경쾌한 락 비트에 맞춰 다 함께 뛰며 춤추는 예배 축제의 최고조를 이끄는 청년부 전용 선포곡입니다." },
-  { title: "파이팅 야곱", artist: "파이디온", key: "C", bpm: "fast", mood: "bright", target: "child", themes: ["thanks", "decision"], reason: "어린이 예배에서 가장 반응이 뜨거우며 율동과 함께 믿음으로 일어서는 씩씩한 축제곡입니다." },
-  { title: "예수님 따라가요", artist: "파이디온", key: "G", bpm: "fast", mood: "bright", target: "child", themes: ["worship", "thanks"], reason: "예수님 한 걸음, 나 한 걸음 따라가며 기쁘고 사랑스러운 고백을 신나는 율동과 결합하기 좋습니다." },
-  { title: "아름다운 마음들이 모여", artist: "파이디온", key: "C", bpm: "medium", mood: "bright", target: "child", themes: ["grace", "thanks"], reason: "어린이 예배에서 서로를 축복하고 환영하며 부르기 쉬운 사랑과 교제의 전통 찬양입니다." },
-  { title: "예수님은 사랑이신걸요", artist: "파이디온", key: "C", bpm: "medium", mood: "bright", target: "child", themes: ["grace", "thanks"], reason: "단순한 가사와 사랑스러운 선율로 아이들이 주님의 사랑을 온몸으로 고백하게 돕습니다." },
-  { title: "다윗처럼", artist: "어린이 찬양", key: "G", bpm: "fast", mood: "bright", target: "child", themes: ["thanks", "worship"], reason: "기쁨으로 뛰놀며 다윗처럼 기쁘게 춤추며 하나님을 찬양하도록 이끕니다." },
-  { title: "예수 전하세", artist: "위러브 (WELOVE)", key: "A", bpm: "fast", mood: "bright", target: "youth", themes: ["worship", "decision"], reason: "세상을 향해 예수를 전하자는 선교적 사명을 신나는 비트와 함께 외치는 찬양입니다." },
-  { title: "주의 나라 (Kingdom of God)", artist: "위러브 (WELOVE)", key: "E", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "이 땅에 도래할 하나님의 나라를 강력하게 선포하는 모던 워십입니다." },
-  { title: "하늘 위에 주님 밖에", artist: "제이어스 (J-US)", key: "A", bpm: "fast", mood: "bright", target: "youth", themes: ["worship", "decision"], reason: "주님만을 삶의 유일한 피난처이자 상급으로 삼겠다는 고백을 기쁘고 빠른 템포로 이끕니다." },
-  { title: "주의 이름 높이며", artist: "제이어스 (J-US)", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "하늘에서 내려오신 주님의 은혜를 기쁜 박수와 함께 힘차게 노래하기에 좋습니다." },
-  { title: "내 마음에 주를 향한 사랑이", artist: "제이어스 (J-US)", key: "F", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "온 마음 다해 하나님을 경배하고 예배자로 나아갈 때 회중의 몰입을 극대화합니다." },
-  { title: "예수 예수", artist: "김윤진", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "슬픔을 기쁨으로 바꾸시는 예수라는 달콤하고 강한 이름을 눈물로 깊이 묵상하게 합니다." },
-  { title: "광야를 지나며", artist: "히즈윌 (HisWill)", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "내 힘을 빼고 온전히 하나님만 의지해야 하는 광야의 시간을 따뜻한 위로로 감싸안습니다." },
-  { title: "믿음이 없이는", artist: "히즈윌 (HisWill)", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "grace"], reason: "하나님을 기쁘시게 하는 참된 믿음의 삶이 무엇인지 차분하고 깊게 성찰하게 합니다." },
-  { title: "하루", artist: "히즈윌 (HisWill)", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "오늘 하루도 주님의 날개 아래 평안하게 보내며 소소한 은혜를 감사하는 곡입니다." },
-  { title: "주님은 산 같아서", artist: "마커스워십", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "흔들리지 않는 영원한 산과 같으신 하나님의 신실함을 잔잔하게 고백합니다." },
-  { title: "주만의 주를 위한", artist: "마커스워십", key: "D", bpm: "medium", mood: "grand", target: "adult", themes: ["worship", "decision"], reason: "나의 삶을 거룩한 제사로 드리고 오직 주님만을 위해 살겠다는 위대한 결단송입니다." },
-  { title: "기꺼이 주께 (Gladly)", artist: "마커스워십", key: "D", bpm: "fast", mood: "bright", target: "youth", themes: ["decision", "thanks"], reason: "자신을 온전히 기쁨으로 주께 내어드리는 삶을 펑키하고 밝은 세션 사운드로 펼쳐줍니다." },
-  { title: "나의 한숨을 바꾸셨네", artist: "소진영", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "눈물의 한숨을 깊은 찬송으로 바꾸신 하나님의 손길을 찬양하는 위로의 대명사입니다." },
-  { title: "심령이 가난한 자는", artist: "마커스워십", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "천국을 소유한 가난한 심령의 복을 묵상하는 회중 참회용 잔잔한 찬양입니다." },
-  { title: "오 신실 하신 주", artist: "찬송가 편곡", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "대를 이어 변함없이 자비를 베푸시는 신실하신 하나님을 장중하게 노래하는 전통 워십입니다." },
-  { title: "주의 친절한 팔에 안기세 (찬송가 405장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "adult", themes: ["thanks", "comfort"], reason: "영원하신 하나님의 팔에 안겨 평안함을 누리는 감사를 밝고 신나는 편곡으로 전합니다." },
-  { title: "내 진정 사모하는 (찬송가 88장)", artist: "찬송가 편곡", key: "F", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "내 진정 사모하는 친구이신 예수님을 기쁜 템포와 통쾌한 리듬 속에서 축제처럼 선포합니다." },
-  { title: "이 눈에 아무 증거 아니뵈어도 (찬송가 545장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "adult", themes: ["decision", "comfort"], reason: "오직 하나님의 약속을 믿고 믿음의 길을 우직하게 걸어가겠다는 선포적 찬송입니다." },
-  { title: "예수 더 알기 원하네 (찬송가 453장)", artist: "찬송가 편곡", key: "Eb", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "주님의 대속하신 넓은 사랑을 더 깊이 깨닫고 주를 더 알아가기를 소망하는 곡입니다." },
-  { title: "허락하신 새 땅에 (찬송가 347장)", artist: "찬송가 편곡", key: "Ab", bpm: "fast", mood: "bright", target: "adult", themes: ["decision", "thanks"], reason: "약속의 땅을 향해 앞으로 힘차게 나아가는 믿음의 용사들을 격려하는 박진감 넘치는 곡입니다." },
-  { title: "나 주님이 더욱 필요해", artist: "어노인팅", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "매 순간마다 주님의 도우심과 손길이 필요함을 겸손히 아뢰는 깊은 고백송입니다." },
-  { title: "나 무엇과도 주님을 바꾸지 않으리", artist: "어노인팅", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "세상 유혹과 만족 대신 주님의 사랑을 내 삶의 최고의 가치로 고백하는 고전입니다." },
-  { title: "마음이 상한 자를 (고쳐주소서)", artist: "어노인팅", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "아파하는 이들의 상처를 감싸고 이 땅에 하나님의 위로와 하늘 평화를 간구하는 곡입니다." },
-  { title: "보혈을 지나", artist: "제이 (J-US 버전)", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "worship"], reason: "하나님의 품으로 나아가기 위해 보혈의 공로를 깊이 의지하며 드리는 고백입니다." },
-  { title: "예수 우리 왕이여", artist: "예수전도단", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "이곳에 임재하셔서 다스려 주시기를 구하는 장중하고 엄숙한 분위기의 오프닝 묵상곡입니다." },
-  { title: "구주와 함께 나 죽었으니 (찬송가 407장)", artist: "찬송가 편곡", key: "Eb", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "grace"], reason: "주와 함께 매일 죽고 매일 주와 함께 다시 살겠다는 십자가 도의 극치를 묵상하게 돕습니다." },
-  { title: "나의 마음을 (Refiner's Fire)", artist: "디사이플스", key: "D", bpm: "medium", mood: "grand", target: "youth", themes: ["decision", "worship"], reason: "나를 정금과 같이 정결하게 빚어 가실 하나님께 나의 삶을 헌신하는 깊은 위탁의 기도송입니다." },
-  { title: "우리는 주의 움직이는 교회", artist: "소진영", key: "G", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "우리가 성령 안에서 세워진 성전이며 주님의 살아있는 교회임을 선포하는 선교적 워십입니다." },
-  { title: "마지막 날에", artist: "예수전도단", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["decision", "worship"], reason: "성령의 불과 바람으로 마지막 세대를 깨우고 열방을 회복시키실 소망을 기쁨으로 부릅니다." },
-  { title: "나 주님의 기쁨 되기 원하네", artist: "어노인팅", key: "F", bpm: "medium", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "나의 마음과 생각을 주님이 원하시는 뜻에 맞춰 살기를 소원하는 전통 헌신송입니다." },
-  { title: "물이 바다 덮음 같이", artist: "어노인팅", key: "Bb", bpm: "medium", mood: "grand", target: "youth", themes: ["decision", "worship"], reason: "여호와의 영광을 인정하는 것이 세상 가득 채워질 그날을 향해 장엄하게 선포하며 부릅니다." },
-  { title: "주가 보이신 생명의 길", artist: "마커스워십", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "grace"], reason: "주님이 걸어가신 그 좁고 험난한 생명의 길을 믿음으로 인내하며 따르겠다는 고백입니다." },
-  { title: "오직 예수 (주님 같은 반석은 없도다)", artist: "디사이플스", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["worship", "thanks"], reason: "변함없는 든든한 반석이신 주님만을 의지하며 다 함께 크게 기뻐하며 뛰는 찬양입니다." },
-  { title: "주님 곁으로 날 이끄소서", artist: "어노인팅", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "주님의 사랑 외에는 다른 만족이 없음을 주님의 거룩한 날개 그늘 아래서 묵상하는 평온한 고전입니다." },
-  { title: "주의 임재 안에서", artist: "예수전도단", key: "G", bpm: "medium", mood: "grand", target: "adult", themes: ["worship", "grace"], reason: "주의 보혈로 지성소에 들어가 주님의 광채를 바라볼 때 일어나는 감격을 다룹니다." },
-  { title: "아름다우신", artist: "예수전도단", key: "A", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "grace"], reason: "내 삶의 구원자이신 주님의 눈부신 아름다움을 경외함과 장엄함으로 목놓아 고백합니다." },
-  { title: "성령이 오셨네", artist: "김도현", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "우리 삶의 가장 깊은 곳에 찾아오셔서 친히 탄식하시며 인도하시는 보혜사 성령의 임재를 사모합니다." },
-  { title: "주의 은혜로 오직 살아가네", artist: "손경민", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "thanks"], reason: "나의 호흡 and 일상이 당연한 것이 아닌 오직 창조주의 자비와 은혜의 선물임을 고백하는 위로의 대곡입니다." },
-  { title: "감사", artist: "손경민", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["thanks", "grace"], reason: "지나온 내 삶의 모든 여정에서 기쁨과 눈물조차 모두 감사의 제목이었음을 뜨겁게 돌이키는 고백송입니다." },
-  { title: "주님이 하십니다", artist: "손경민", key: "Eb", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "grace"], reason: "인간의 한계를 뒤로하고, 불가능을 가능케 하실 분이 오직 주님 한 분이심을 믿음으로 선포합니다." },
-  { title: "나의 힘이 되신 여호와여", artist: "복음성가", key: "A", bpm: "medium", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "고난 중에 요새와 피난처가 되시는 여호와를 진심 어린 목소리로 의지하기 좋은 은혜의 전통 복음성가입니다." },
-  { title: "주 하나님 지으신 모든 세계 (찬송가 79장)", artist: "찬송가 편곡", key: "Bb", bpm: "medium", mood: "grand", target: "adult", themes: ["worship", "thanks"], reason: "광활한 대자연 속에 깃든 주님의 위대하심을 찬송가의 웅장한 화성 위에 얹어 소리 높여 고백합니다." },
-  { title: "아주 먼 옛날", artist: "복음성가", key: "C", bpm: "medium", mood: "bright", target: "child", themes: ["grace", "thanks"], reason: "오래전 계획된 하나님의 귀한 사랑의 언약을 어린이들에게 전달하는 대표 축복송입니다." },
-  { title: "당신은 사랑받기 위해 태어난 사람", artist: "이율구", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "온 마음으로 축복하며 회중과 새가족을 주님의 사랑의 마음으로 환대할 때 가장 적합합니다." },
-  { title: "그 사랑 (아버지 사랑 내가 노래해)", artist: "마커스워십", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "worship"], reason: "아버지의 포기하지 않는 그 크신 사랑을 어쿠스틱 기타 선율 위에서 잔잔하고 따뜻하게 고백합니다." },
-  { title: "구주 예수 의지함이 (찬송가 542장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "adult", themes: ["grace", "comfort"], reason: "예수님을 구주로 고백하며 온전히 신뢰하는 기쁨을 기쁜 미디엄 비트로 경쾌하게 노래합니다." },
-  { title: "다 찬양하여라 (찬송가 21장)", artist: "찬송가 편곡", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["worship", "thanks"], reason: "전능하신 창조주 하나님을 힘찬 리듬과 함께 다 같이 소리 높여 대찬양하는 대표 오프닝송입니다." },
-  { title: "내 영혼의 그윽히 깊은 데서 (찬송가 412장)", artist: "찬송가 편곡", key: "Ab", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "평화 평화로다 하늘 위에서 내려오네, 내 마음의 풍랑을 잔잔케 하시는 은혜를 깊이 묵상합니다." },
-  { title: "죄짐 맡은 우리 구주 (찬송가 369장)", artist: "찬송가 편곡", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "우리의 근심과 슬픔을 친히 짊어지시는 주님께 모든 기도를 드리는 평화로운 찬송입니다." },
-  { title: "빛의 사자들이여 (찬송가 502장)", artist: "찬송가 편곡", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["decision", "thanks"], reason: "어두운 세상에 생명의 빛을 들고 파송되는 성도들의 힘찬 선교적 전진을 담은 빠른 찬양입니다." },
-  { title: "예수 십자가에 흘린 피로써 (찬송가 259장)", artist: "찬송가 편곡", key: "Ab", bpm: "fast", mood: "bright", target: "adult", themes: ["grace", "worship"], reason: "예수의 보혈 공로로 내 모든 죄가 씻겼음을 기쁜 박수와 행진곡 풍의 템포로 고백합니다." },
-  { title: "내 평생에 가는 길 (찬송가 413장)", artist: "찬송가 편곡", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "내 영혼 평안해, 어떤 풍파 속에서도 주님이 주시는 참된 평강을 고백하는 불후의 위로 찬송입니다." },
-  { title: "주 안에 있는 나에게 (찬송가 370장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "adult", themes: ["thanks", "comfort"], reason: "주님 품에 안긴 나에게 딴 근심이 없음을 경쾌한 포크 리듬 편곡으로 은혜롭게 선포합니다." },
-  { title: "나 같은 죄인 살리신 (찬송가 305장)", artist: "찬송가 편곡", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "worship"], reason: "놀라운 주의 은혜(Amazing Grace)를 깊이 묵상하며 눈물로 십자가 사랑을 노래하는 명곡입니다." },
-  { title: "예수 따라가며 (찬송가 449장)", artist: "찬송가 편곡", key: "F", bpm: "medium", mood: "bright", target: "adult", themes: ["decision", "thanks"], reason: "주의 말씀에 순종하며 매일 동행하는 삶의 기쁨을 다짐하는 경쾌한 행진곡풍 찬양입니다." },
-  { title: "내 주를 가까이 하게 함은 (찬송가 338장)", artist: "찬송가 편곡", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "comfort"], reason: "야곱이 돌베개를 베고 잤던 고난 중에도 주님만을 평생 가까이 따르겠다는 눈물의 찬송입니다." },
-  { title: "주의 피로 이룬 샘물 (찬송가 268장)", artist: "찬송가 편곡", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["grace", "worship"], reason: "샘물과 같이 마르지 않는 보혈의 구원 능력을 박수 치며 신나게 선포하는 빠른 비트 찬양입니다." },
-  { title: "온 맘 다해 (I Offer My Life)", artist: "마커스워십", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "나의 삶의 모든 고백과 수고를 온전히 주님께 산 제사로 위탁하는 대표 헌신송입니다." },
-  { title: "오직 주만 회원", artist: "마커스워십", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "낙심 중에 내 삶의 주인이신 주님만 조용히 바라보며 힘을 얻는 은혜의 고백입니다." },
-  { title: "내 삶은 주의 것", artist: "김명선", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "grace"], reason: "인생의 모든 주권이 주님의 것임을 차분하게 시인하는 눈물의 묵상 찬양입니다." },
-  { title: "그 사랑 얼마나", artist: "복음성가", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "다 헤아릴 수 없는 십자가 대속의 넓은 사랑을 잔잔하게 찬미합니다." },
-  { title: "내 이름 아시죠 (He Knows My Name)", artist: "디사이플스", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "나를 지으시고 내 모든 형편과 이름을 정확히 아시는 하나님 아버지의 극진한 위로입니다." },
-  { title: "주님과 같이 (There is none like You)", artist: "복음성가", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "comfort"], reason: "내 영혼을 만져줄 분은 세상에 오직 주밖에 없음을 가장 아름다운 멜로디로 노래합니다." },
-  { title: "누군가 널 위해 기도하네", artist: "복음성가", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "지치고 외로울 때 누군가 나를 위해 눈물로 중보 기도하고 계신 주님의 사랑을 상기시킵니다." },
-  { title: "예수 나를 위하여 (찬송가 144장)", artist: "찬송가 편곡", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "worship"], reason: "날 위해 물과 피를 쏟으신 십자가 고통을 묵상하며 참회하는 사순절/고난주간 찬송입니다." },
-  { title: "주님 다시 오실 때까지", artist: "소향", key: "C", bpm: "slow", mood: "grand", target: "adult", themes: ["decision", "worship"], reason: "내게 주어진 사명의 길을 묵묵히 걷다가 영광 중에 주를 맞이하겠다는 장엄한 헌신송입니다." },
-  { title: "사명", artist: "동방현주", key: "Em", bpm: "slow", mood: "grand", target: "adult", themes: ["decision", "comfort"], reason: "험산준령도 주님의 피 묻은 십자가를 전하기 위해 기꺼이 넘겠다는 절절한 결단의 곡입니다." },
-  { title: "또 하나의 열매를 바라시며", artist: "이율구", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "하나님의 사랑으로 자라날 또 하나의 아름다운 신앙의 열매들을 축복하며 부르는 축복송입니다." },
-  { title: "주의 거룩한 이름을 부를 때", artist: "마커스워십", key: "D", bpm: "medium", mood: "grand", target: "adult", themes: ["worship", "comfort"], reason: "주의 이름을 부를 때 찾아오는 놀라운 임재와 승리를 점진적으로 빌드업하여 선포합니다." },
-  { title: "주님은 너를 만드신 분", artist: "복음성가", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "너를 결코 포기하지 않으시며 지켜보시는 하나님의 신실한 손길을 다정하게 전합니다." },
-  { title: "나의 등 뒤에서", artist: "복음성가", key: "E", bpm: "medium", mood: "bright", target: "adult", themes: ["thanks", "comfort"], reason: "일어나 걸으라 내가 너를 도우리라, 든든히 격려하시는 주님의 음성을 경쾌하게 노래합니다." },
-  { title: "주여 우린 연약합니다", artist: "마커스워십", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "매번 넘어지는 우리의 연약함을 주님의 긍휼한 은혜 날개로 덮어주시기를 구하는 고백입니다." },
-  { title: "날 만드신 사랑", artist: "위러브 (WELOVE)", key: "E", bpm: "slow", mood: "calm", target: "youth", themes: ["grace", "comfort"], reason: "주님의 영원하고 조건 없는 사랑이 오늘 지친 나를 새롭게 빚어가심을 노래합니다." },
-  { title: "깊은 곳에 나아가", artist: "위러브 (WELOVE)", key: "G", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "얕은 물가에서 벗어나 주님의 깊은 임재의 바다 속으로 온전히 던져지기를 구합니다." },
-  { title: "비 준비하시니", artist: "마커스워십", key: "A", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "땅을 돌보사 은혜의 비를 흡족히 내려주시는 창조주의 풍요를 박수 치며 신나게 선포합니다." },
-  { title: "주 은혜 날 채우시네", artist: "어노인팅", key: "G", bpm: "medium", mood: "bright", target: "youth", themes: ["thanks", "grace"], reason: "그저 주님의 임재와 주시는 은혜에 기대어 기쁨으로 찬양하기 좋은 밝은 포크 곡입니다." },
-  { title: "나의 사랑 너의 어여쁜 자야", artist: "어노인팅", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "comfort"], reason: "아가서 말씀을 토대로 겨울이 지나고 꽃 피는 봄에 우리를 부르시는 주님의 사랑의 밀어입니다." },
-  { title: "그가 아시나니", artist: "손경민", key: "Eb", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "내가 걷는 고단한 인생의 모든 연단 과정을 오직 창조주만이 정확히 아시고 인도하심을 신뢰합니다." },
-  { title: "은혜를 아는 자", artist: "손경민", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "grace"], reason: "내 삶에 베풀어진 십자가 사랑의 깊이를 깨달아 기꺼이 감사함으로 섬기며 살 것을 결단합니다." },
-  { title: "동행", artist: "손경민", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "나 홀로 걷는 고독한 인생길 같으나, 보이지 않는 발자국으로 함께 걸으시는 주님의 동행을 고백합니다." },
-  { title: "길 (The Way)", artist: "손경민", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "내가 곧 길이요 진리요 생명이니, 다른 방황을 그치고 오직 예수를 따르겠다고 시인합니다." },
-  { title: "믿음으로 서리라", artist: "마커스워십", key: "G", bpm: "medium", mood: "grand", target: "adult", themes: ["decision", "comfort"], reason: "현실의 거친 파도 속에서도 타협하지 않고 굳건히 말씀의 반석 위에 서겠다는 비장한 고백입니다." },
-  { title: "예수 인도하셨네", artist: "손경민", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["thanks", "grace"], reason: "인생의 황혼 무렵에 지나온 모든 나날이 전적인 주님의 인도하심이었음을 감격 속에 돌이킵니다." },
-  { title: "다 감사드리세 (찬송가 66장)", artist: "찬송가 편곡", key: "F", bpm: "medium", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "온 인류를 돌보시고 늘 기이한 은총으로 감싸주시는 하나님께 다 함께 감사 찬송을 올립니다." },
-  { title: "예수께서 오실 때에 (찬송가 564장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "child", themes: ["grace", "thanks"], reason: "하늘의 빛나는 보석 같은 아이들이 기쁘게 구주를 맞이하는 귀여운 분위기의 전통 찬송가입니다." },
-  { title: "날 사랑하심 (찬송가 563장)", artist: "찬송가 편곡", key: "Eb", bpm: "slow", mood: "calm", target: "child", themes: ["grace", "comfort"], reason: "예수 사랑하심은 성경에서 배웠네, 평생에 잊을 수 없는 기초적인 구원 교리를 담은 평온한 고백송입니다." },
-  { title: "주 여호와는 광대하시도다", artist: "복음성가", key: "A", bpm: "medium", mood: "grand", target: "adult", themes: ["worship", "thanks"], reason: "온 세상 위에 우뚝 서신 위대한 하나님의 광대하심을 선포하는 장중한 흐름의 전통 워십입니다." },
-  { title: "모든 열방 주 볼 때까지", artist: "예수전도단", key: "D", bpm: "medium", mood: "grand", target: "youth", themes: ["decision", "worship"], reason: "내 아버지 그 뜻대로 이 땅에 부흥의 계절이 오기를 꿈꾸며 선교적 비전을 노래합니다." },
-  { title: "성령의 바람", artist: "파이디온", key: "C", bpm: "fast", mood: "bright", target: "child", themes: ["decision", "thanks"], reason: "성령의 따스한 바람이 아이들의 여린 가슴에 사랑과 전도의 씨앗을 가득 불어넣기를 기도하는 신나는 댄스 곡입니다." },
-  { title: "하늘과 땅 모두 다", artist: "파이디온", key: "G", bpm: "medium", mood: "bright", target: "child", themes: ["thanks", "worship"], reason: "온 우주 만물을 창조하신 지혜의 하나님을 아이들의 귀여운 입술로 씩씩하게 영광 돌리게 합니다." },
-  { title: "내게 강 같은 평화", artist: "복음성가", key: "G", bpm: "fast", mood: "bright", target: "child", themes: ["thanks", "comfort"], reason: "강 같은 평화, 바다 같은 사랑을 온몸으로 신나게 율동하며 부르는 기쁜 복음성가입니다." },
-  { title: "돈으로도 못 가요 (하늘나라)", artist: "주일학교", key: "C", bpm: "medium", mood: "bright", target: "child", themes: ["grace", "decision"], reason: "돈, 지식, 벼슬이 아닌 오직 주님을 향한 믿음으로 천국에 들어감을 가르쳐주는 순진한 고전입니다." },
-  { title: "구원열차", artist: "주일학교", key: "F", bpm: "fast", mood: "bright", target: "child", themes: ["thanks", "decision"], reason: "예수님을 기관사 삼고 믿음의 구원열차에 탑승하여 천국을 향해 힘차게 달려가는 신나는 행진 찬양입니다." },
-  { title: "호산나 (Hosanna)", artist: "예수전도단", key: "E", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "구원의 이름을 높이며 성전 문을 열고 임재하시는 왕께 눈물로 자비를 베풀어주기를 외치는 모던 워십입니다." },
-  { title: "주 사랑이 온 세상에", artist: "예수전도단", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "하늘에서 내려오신 주님이 십자가와 무덤을 이기시고 영광 받으셨음을 온몸을 흔들며 기쁘게 경배합니다." },
-  { title: "기뻐하며 왕께 노래하며", artist: "예수전도단", key: "G", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "우리의 찬양 중에 좌정하시는 만왕의 왕께 우렁찬 박수와 춤으로 경배를 올립니다." },
-  { title: "손을 높이 들고", artist: "예수전도단", key: "E", bpm: "medium", mood: "bright", target: "youth", themes: ["worship", "thanks"], reason: "주님의 이름을 찬양할 때 하늘의 기쁨이 쏟아져 내림을 신나는 기타 드라이브에 맞춰 노래합니다." },
-  { title: "주님 내 길 예비하시니", artist: "복음성가", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "한 치 앞도 알 수 없으나 나의 모든 내일을 아름답게 다듬고 준비해 두시는 주님을 조용히 신뢰합니다." },
-  { title: "나의 부름 (Calling)", artist: "마커스워십", key: "A", bpm: "medium", mood: "grand", target: "youth", themes: ["decision", "worship"], reason: "나를 세상 속 예배자로 삼고 영광의 제단으로 부르신 하나님의 약속을 우직하게 지켜가겠다고 선서합니다." },
-  { title: "목마른 사슴", artist: "복음성가", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "comfort"], reason: "시냇물을 찾아 헐떡이는 목마른 사슴의 심정으로 내 영혼의 갈급함을 채우실 오직 예수를 갈망합니다." },
-  { title: "목마른 사슴이 시냇물을", artist: "복음성가", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "comfort"], reason: "내 영혼이 주님만을 더욱 갈망하며, 세상을 내려놓고 예배의 중심으로 나아갑니다." },
-  { title: "약한 나로 강하게", artist: "어노인팅", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "thanks"], reason: "나의 연약함을 강함으로 이끄시고 부요케 하신 어린양 예수의 보혈을 기쁨으로 노래합니다." },
-  { title: "주님께 감사해", artist: "파이디온", key: "G", bpm: "medium", mood: "bright", target: "child", themes: ["thanks", "grace"], reason: "언제나 한결같이 먹이시고 지키시는 주님께 해맑게 박수 치며 감사를 표하는 어린이 찬양입니다." },
-  { title: "주 한 분만으로", artist: "디사이플스", key: "A", bpm: "fast", mood: "bright", target: "youth", themes: ["worship", "decision"], reason: "세상 다른 만족을 거부하고, 오직 주 한 분만으로 만족함을 역동적으로 선포합니다." },
-  { title: "주 보혈 날 씻었네", artist: "디사이플스", key: "D", bpm: "fast", mood: "bright", target: "youth", themes: ["grace", "worship"], reason: "죄에서 깨끗하게 씻어주신 주님의 십자가 사랑을 씩씩하고 밝은 리듬에 맞춰 찬양합니다." },
-  { title: "왕이신 나의 하나님", artist: "복음성가", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "thanks"], reason: "왕이신 주님의 이름을 대대로 송축하며 높여드리는 대표적인 전통 참배송입니다." },
-  { title: "좋으신 하나님 (God is so good)", artist: "복음성가", key: "E", bpm: "medium", mood: "bright", target: "adult", themes: ["thanks", "grace"], reason: "좋으신 하나님, 참 좋으신 나의 하나님을 다정한 선율 위에 고백하는 대중적인 찬양입니다." },
-  { title: "괴로울 때 주님의 얼굴 보라", artist: "복음성가", key: "E", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "풍파 중에 쓰러지지 않도록 평화의 주님을 바라보라 속삭이는 다정한 위로의 노래입니다." },
-  { title: "주께 가오니 (Power of Your Love)", artist: "어노인팅", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "decision"], reason: "주의 사랑의 힘으로 나의 연약함을 씻어주시고 독수리 날개 치듯 날아오르게 하옵소서." },
-  { title: "예수님만을 선포하리", artist: "위러브 (WELOVE)", key: "D", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "어두운 세상 한가운데서 오직 구원의 이름인 예수만을 힘차게 선포하겠다는 모던 선포곡입니다." },
-  { title: "주의 아름다움으로 (Beautiful One)", artist: "예수전도단", key: "G", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "grace"], reason: "주님의 위대한 구원 역사와 말로 다할 수 없는 그 찬란한 아름다움을 높여 부릅니다." },
-  { title: "내 구주 예수님 (Shout to the Lord)", artist: "힐송 (Hillsong)", key: "A", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "thanks"], reason: "온 세상 위에 위대하신 구원의 왕을 소리 높여 외치며 경배하는 글로벌 메가 워십송입니다." },
-  { title: "주를 위한 이곳에", artist: "마커스워십", key: "D", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "화려한 겉모습을 버리고, 주님이 진짜 기뻐하시는 상한 심령의 참된 예배자로 서기를 구합니다." },
-  { title: "예수 사랑하심을 (찬송가 563장)", artist: "찬송가 편곡", key: "Eb", bpm: "slow", mood: "calm", target: "child", themes: ["grace", "comfort"], reason: "성경에 기록된 하나님의 진실한 사랑을 아이들의 투명한 눈망울을 빌려 잔잔히 묵상하는 찬송입니다." },
-  { title: "만군의 여호와", artist: "제이어스 (J-US)", key: "A", bpm: "medium", mood: "grand", target: "youth", themes: ["worship", "decision"], reason: "우리의 힘과 피난처 되신 만군의 여호와가 우리와 늘 영원히 함께하심을 웅장하게 선포합니다." },
-  { title: "내 영혼이 은총 입어 (찬송가 438장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "adult", themes: ["grace", "thanks"], reason: "죄 사함 받고 주님과 동행하는 그 어디나 하늘나라임을 기쁘고 흥겨운 포크 리듬으로 전합니다." },
-  { title: "나의 갈 길 다가도록 (찬송가 384장)", artist: "찬송가 편곡", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "무슨 일을 만나든지 내 앞길을 인도하실 주님의 온전한 자비를 겸손히 묵상하는 찬송입니다." },
-  { title: "아침 해가 돋을 때 (찬송가 552장)", artist: "찬송가 편곡", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "decision"], reason: "새 아침을 주신 주님을 우렁차게 찬양하며 빛의 자녀로 살아갈 것을 힘차게 선포합니다." },
-  { title: "주의 음성을 내가 들으니 (찬송가 540장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "bright", target: "adult", themes: ["grace", "decision"], reason: "내가 매일 십자가 앞으로 더 가까이 나아가 주님과 더욱 긴밀히 사귀기를 바라는 곡입니다." },
-  { title: "하나님의 나팔소리 (찬송가 180장)", artist: "찬송가 편곡", key: "Ab", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "마지막 날 재림의 나팔 소리에 맞춰 구원받은 성도들이 영광 중에 주를 맞이하는 기쁨의 대행진곡입니다." },
-  { title: "죄에서 자유를 얻게 함은 (찬송가 268장)", artist: "찬송가 편곡", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["grace", "worship"], reason: "보혈의 위대한 힘을 박수 치며 신나게 고백하는 찬양예배 최고의 인기 찬송입니다." },
-  { title: "주의 약속하신 말씀 위에서 (찬송가 546장)", artist: "찬송가 편곡", key: "Bb", bpm: "fast", mood: "bright", target: "adult", themes: ["decision", "worship"], reason: "어떤 풍파와 대적 속에서도 변치 않는 약속의 굳건한 말씀 위에 굳게 서겠다는 선포입니다." },
-  { title: "나의 믿음 두 기둥", artist: "파이디온", key: "F", bpm: "medium", mood: "bright", target: "child", themes: ["decision", "grace"], reason: "말씀과 기도의 튼튼한 두 기둥을 마음속에 세우고 믿음의 어린이가 되겠다고 선언합니다." },
-  { title: "예수님 때문에", artist: "파이디온", key: "C", bpm: "medium", mood: "bright", target: "child", themes: ["thanks", "grace"], reason: "예수님 때문에 기쁘고 행복한 어린이 예배의 설렘을 앙증맞은 리듬과 고백으로 연출합니다." },
-  { title: "하늘에 가득 찬 영광의 보좌 (찬송가 9장)", artist: "찬송가 편곡", key: "G", bpm: "medium", mood: "grand", target: "adult", themes: ["worship", "thanks"], reason: "보좌에 앉으신 거룩한 하나님을 온 교회가 경배하며 거룩을 찬송하는 전통 예배곡입니다." },
-  { title: "천사들의 노래가 (찬송가 125장)", artist: "찬송가 편곡", key: "F", bpm: "slow", mood: "calm", target: "adult", themes: ["thanks", "worship"], reason: "영광을 높이 계신 주님께 돌리는 아름답고 거룩한 크리스마스 절기 전용 찬송입니다." },
-  { title: "고요한 밤 거룩한 밤 (찬송가 109장)", artist: "찬송가 편곡", key: "Bb", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "grace"], reason: "어두운 세상에 평화의 구주로 탄생하신 아기 예수를 경건하고 평화롭게 묵상하는 성탄 찬송입니다." },
-  { title: "기쁘다 구주 오셨네 (찬송가 115장)", artist: "찬송가 편곡", key: "D", bpm: "fast", mood: "bright", target: "adult", themes: ["thanks", "worship"], reason: "구주의 오심을 온 세상에 큰 기쁨과 우렁찬 소리로 알리며 찬양하는 신나는 성탄 캐럴 찬송입니다." },
-  { title: "성령의 비가 내리네", artist: "디사이플스", key: "D", bpm: "fast", mood: "bright", target: "youth", themes: ["worship", "thanks"], reason: "이 메마른 땅 위에 약속하신 성령의 단비를 구하며 기쁨으로 춤추는 예배용 락 업템포 찬양입니다." },
-  { title: "주님 뜻대로 살기로 했네", artist: "복음성가", key: "F", bpm: "medium", mood: "bright", target: "youth", themes: ["decision", "worship"], reason: "뒤돌아서지 않겠네, 세상 등지고 십자가를 향해 곧바로 전진하겠다는 순직한 신앙의 다짐입니다." },
-  { title: "십자가를 질 수 있나 (찬송가 461장)", artist: "찬송가 편곡", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "worship"], reason: "우리의 평생의 삶을 주와 복음을 위해 아낌없이 헌신하겠다는 장중한 참회 결단송입니다." },
-  { title: "불을 내려주소서", artist: "천관웅", key: "Em", bpm: "fast", mood: "bright", target: "youth", themes: ["worship", "decision"], reason: "하늘의 불을 구하며 예배자들의 심령에 타오르는 선교적 열정을 불어넣는 대표적인 고속 워십입니다." },
-  { title: "밀알", artist: "천관웅", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["decision", "grace"], reason: "한 알의 썩어지는 밀알처럼 내 삶이 하나님의 소망을 위해 온전히 바쳐지기를 구하는 눈물의 고백입니다." },
-  { title: "주를 향한 나의 사랑을", artist: "복음성가", key: "E", bpm: "fast", mood: "bright", target: "youth", themes: ["thanks", "worship"], reason: "세상을 구원하신 주님의 기이한 사랑을 박수 치며 씩씩하고 역동적으로 선포하는 오프닝 찬양입니다." },
-  { title: "주님 손 잡고 일어서세요", artist: "복음성가", key: "Eb", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "더는 실망하고 좌절하지 말며, 주님 손 잡고 다시 일어나 걸어갈 것을 격려하는 위로의 대명사입니다." },
-  { title: "예배의 황무지에서", artist: "마커스워십", key: "A", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "decision"], reason: "메마른 황무지 같은 인생길 속에서도 신령과 진정으로 예배의 자리를 지킬 것을 결단합니다." },
-  { title: "다시 일어서기", artist: "손경민", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["comfort", "grace"], reason: "상하고 깨진 심령을 싸매시고 다시 일으켜 세우실 신실한 구주의 사랑을 잔잔하게 고백합니다." },
-  { title: "주의 보혈 능력 있도다", artist: "복음성가", key: "G", bpm: "fast", mood: "bright", target: "adult", themes: ["grace", "worship"], reason: "어린양의 귀한 피가 가진 기이하고 풍성한 죄 사함의 은총을 기쁨의 손뼉으로 찬양합니다." },
-  { title: "목마른 사슴이 시냇물을 찾기에", artist: "복음성가", key: "C", bpm: "slow", mood: "calm", target: "adult", themes: ["worship", "comfort"], reason: "내 중심이 주님만을 더욱 의지하고 갈망하는 깊은 묵상 흐름에 매우 적합합니다." },
-  { title: "주님 뜻대로", artist: "복음성가", key: "F", bpm: "medium", mood: "bright", target: "adult", themes: ["decision", "grace"], reason: "어떤 방해와 시련 속에서도 주님 가신 생명의 십자가 길을 묵묵히 따르겠다는 순직한 헌신송입니다." },
-  { title: "그 사랑 얼마나 (아버지 사랑 내가 노래해)", artist: "김몽은", key: "G", bpm: "slow", mood: "calm", target: "adult", themes: ["grace", "worship"], reason: "나를 향한 하나님 아버지의 그 크고 깊은 독생자의 사랑을 눈물 흘리며 고백하는 묵상곡입니다." },
-  { title: "구원열차 타고 달려요", artist: "주일학교", key: "F", bpm: "fast", mood: "bright", target: "child", themes: ["thanks", "decision"], reason: "성령의 엔진에 힘입어 천국 종착역을 향해 달려가는 아이들의 힘차고 재기발랄한 율동 찬양입니다." },
-  { title: "다윗처럼 춤을 추면서", artist: "복음성가", key: "G", bpm: "fast", mood: "bright", target: "child", themes: ["thanks", "worship"], reason: "주님의 궤가 돌아올 때 기뻐 날뛰며 바지가 벗겨지도록 찬양했던 다윗의 감격을 유쾌하게 노래합니다." }
+  { title: '나의 하나님', artist: 'El Shaddai', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 하나님 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 사랑하심은', artist: '피아 메들리', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 사랑하심은 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '만 입이 내게 있으면', artist: '찬송가 23장', key: 'A', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '만 입이 내게 있으면 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '구주 예수 의지함이', artist: '찬송가 542장', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '구주 예수 의지함이 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아 하나님의 은혜로', artist: '찬송가 310장', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '아 하나님의 은혜로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '오 신실 하신 주', artist: '찬송가 393장', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '오 신실 하신 주 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 평생에 가는 길', artist: '찬송가 413장', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 평생에 가는 길 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주와 같이 길 가는 것', artist: '찬송가 430장', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주와 같이 길 가는 것 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '태산을 넘어 험곡에 가도', artist: '찬송가 445장', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '태산을 넘어 험곡에 가도 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '슬픈 마음 있는 사람', artist: '찬송가 91장', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '슬픈 마음 있는 사람 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 더 알기 원하네', artist: '찬송가 453장', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 더 알기 원하네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 나라', artist: 'Kingdom of God', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주의 나라 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '시편 139편', artist: '나를 지으신', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '시편 139편 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예배합니다', artist: '완전한 사랑', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예배합니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '기꺼이 주께', artist: 'Gladly', key: 'D', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '기꺼이 주께 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주를 경배', artist: '나는 기쁨의 노래로', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '주를 경배 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '마음이 상한 자를', artist: '고쳐주소서', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '마음이 상한 자를 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '원하고 바라고 기도합니다', artist: '아이자야 씩스티원', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '원하고 바라고 기도합니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님의 마음 있는 곳', artist: '아이자야 씩스티원', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '주님의 마음 있는 곳 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜', artist: '손경민', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '은혜 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '행복', artist: '손경민', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '행복 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '요게벳의 노래', artist: '염평안', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '요게벳의 노래 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '광야를 지나며', artist: '히즈윌', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '광야를 지나며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '하나님의 부르심 (Call)', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하나님의 부르심 (Call) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나는 주를 섬기는 것에 후회가 없습니다', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나는 주를 섬기는 것에 후회가 없습니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '이 말씀 앞에서', artist: '예람워십', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '이 말씀 앞에서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '실로암', artist: '피아워십', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '실로암 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 등 뒤에서', artist: '김명선', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 등 뒤에서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '성령이 오셨네', artist: '김도현', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '성령이 오셨네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 예수', artist: '김윤진', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 예수 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주가 일하시네', artist: '김브라이언', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주가 일하시네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '우리는 주의 움직이는 교회', artist: '소진영', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '우리는 주의 움직이는 교회 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '시선', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '시선 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아바 아버지', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '아바 아버지 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜로다', artist: '예수전도단', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '은혜로다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '보혈을 지나', artist: '예수전도단', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '보혈을 지나 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아름다우신', artist: '예수전도단', key: 'A', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '아름다우신 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '호산나 (Hosanna)', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '호산나 (Hosanna) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '모든 열방 주 볼 때까지', artist: '예수전도단', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '모든 열방 주 볼 때까지 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 사랑이 온 세상에', artist: '예수전도단', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '주 사랑이 온 세상에 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '기뻐하며 왕께 노래하며', artist: '예수전도단', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '기뻐하며 왕께 노래하며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '손을 높이 들고', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '손을 높이 들고 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 부름 (Calling)', artist: '마커스워십', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 부름 (Calling) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주께 가오니 (Power of Your Love)', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주께 가오니 (Power of Your Love) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '좋으신 하나님 (God is So Good)', artist: '어노인팅', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '좋으신 하나님 (God is So Good) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 힘이 되신 여호와여', artist: '복음성가', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 힘이 되신 여호와여 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 삶은 주의 것', artist: '김명선', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 삶은 주의 것 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '그 사랑 (아버지 사랑 내가 노래해)', artist: '마커스워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '그 사랑 (아버지 사랑 내가 노래해) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 이름 아시죠 (He Knows My Name)', artist: '디사이플스', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 이름 아시죠 (He Knows My Name) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님과 같이 (There Is None Like You)', artist: '복음성가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님과 같이 (There Is None Like You) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '누군가 널 위해 기도하네', artist: '복음성가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '누군가 널 위해 기도하네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '왕이신 나의 하나님', artist: '복음성가', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '왕이신 나의 하나님 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '약한 나로 강하게', artist: '어노인팅', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '약한 나로 강하게 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '목마른 사슴이 시냇물을', artist: '복음성가', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '목마른 사슴이 시냇물을 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 사랑 너의 어여쁜 자야', artist: '어노인팅', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 사랑 너의 어여쁜 자야 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '그가 아시나니', artist: '손경민', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '그가 아시나니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜를 아는 자', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '은혜를 아는 자 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '동행', artist: '손경민', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '동행 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '길 (The Way)', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '길 (The Way) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 인도하셨네', artist: '손경민', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 인도하셨네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님의 은혜로', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님의 은혜로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '감사', artist: '손경민', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '감사 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님이 하십니다', artist: '손경민', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님이 하십니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '충만', artist: '지선', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '충만 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '하나님은 너를 지키시는 자', artist: '한스밴드', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하나님은 너를 지키시는 자 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '기대', artist: '워킹', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '기대 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '소원', artist: '한웅재', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '소원 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '야곱의 축복', artist: '소리엘', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '야곱의 축복 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 열방의 소망', artist: '소리엘', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 열방의 소망 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님은 산 같아서', artist: '마커스워십', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님은 산 같아서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주가 보이신 생명의 길', artist: '마커스워십', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주가 보이신 생명의 길 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주를 위한 이곳에', artist: '마커스워십', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주를 위한 이곳에 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '비 준비하시니', artist: '마커스워십', key: 'A', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '비 준비하시니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 거룩한 이름을 부를 때', artist: '마커스워십', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주의 거룩한 이름을 부를 때 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '날 만드신 사랑', artist: '위러브', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '날 만드신 사랑 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '깊은 곳에 나아가', artist: '위러브', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '깊은 곳에 나아가 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수님만을 선포하리', artist: '위러브', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '예수님만을 선포하리 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '만군의 여호와', artist: '제이어스', key: 'A', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '만군의 여호와 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 마음을 (Refiner\'s Fire)', artist: '디사이플스', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 마음을 (Refiner\'s Fire) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '오직 예수', artist: '디사이플스', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '오직 예수 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 한 분만으로', artist: '디사이플스', key: 'A', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '주 한 분만으로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 보혈 날 씻었네', artist: '디사이플스', key: 'D', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '주 보혈 날 씻었네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 아름다움으로', artist: '예수전도단', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '주의 아름다움으로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 구주 예수님 (Shout to the Lord)', artist: '힐송', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 구주 예수님 (Shout to the Lord) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '오직 주만', artist: '마커스워십', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '오직 주만 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님 내 길 예비하시니', artist: '복음성가', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님 내 길 예비하시니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '목마른 사슴', artist: '복음성가', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '목마른 사슴 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주께 가오니', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주께 가오니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 임재 안에서', artist: '예수전도단', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '주의 임재 안에서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나 무엇과도 주님을', artist: '어노인팅', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나 무엇과도 주님을 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나 주님이 더욱 필요해', artist: '어노인팅', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나 주님이 더욱 필요해 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '마음이 상한 자를', artist: '어노인팅', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '마음이 상한 자를 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '물이 바다 덮음 같이', artist: '어노인팅', key: 'Bb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '물이 바다 덮음 같이 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 영혼은 안전합니다', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 영혼은 안전합니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '은혜 아래 있네', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '은혜 아래 있네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 사랑이 나를 숨쉬게 해', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 사랑이 나를 숨쉬게 해 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '온 땅의 주인', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '온 땅의 주인 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 피를 힘입어', artist: '어노인팅', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 피를 힘입어 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나는 예배자입니다', artist: '어노인팅', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나는 예배자입니다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 은혜 날 채우시네', artist: '어노인팅', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 은혜 날 채우시네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 마음을 가득 채운', artist: '어노인팅', key: 'E', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '내 마음을 가득 채운 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아무것도 두려워 말라', artist: '어노인팅', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '아무것도 두려워 말라 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 품에 품으소서', artist: '어노인팅', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 품에 품으소서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 왕 나의 주', artist: '위러브', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '나의 왕 나의 주 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '영원한 사귐으로', artist: '위러브', key: 'D', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '영원한 사귐으로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '고백', artist: '위러브', key: 'A', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '고백 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '낮은 곳으로', artist: '위러브', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '낮은 곳으로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 나라', artist: '위러브', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '주의 나라 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 전하세', artist: '위러브', key: 'A', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '예수 전하세 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '시간을 뚫고', artist: '위러브', key: 'A', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '시간을 뚫고 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '공감하시네', artist: '위러브', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '공감하시네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '밝은 빛을 비추시네', artist: '위러브', key: 'D', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '밝은 빛을 비추시네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '공급자', artist: '위러브', key: 'G', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '공급자 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '호산나', artist: '예수전도단', key: 'E', bpm: 'medium', mood: 'grand', target: 'youth', themes: ['worship', 'grace'], reason: '호산나 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '길', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '길 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 은혜로 오직 살아가네', artist: '손경민', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주의 은혜로 오직 살아가네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '믿음이 없이는', artist: '히즈윌', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '믿음이 없이는 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '하루', artist: '히즈윌', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하루 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님은 너를 만드신 분', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님은 너를 만드신 분 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '괴로울 때 주님의 얼굴 보라', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '괴로울 때 주님의 얼굴 보라 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '좋으신 하나님', artist: '복음성가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '좋으신 하나님 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '또 하나의 열매를 바라시며', artist: '이율구', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '또 하나의 열매를 바라시며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '사명', artist: '동방현주', key: 'Em', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '사명 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내게 강 같은 평화', artist: '복음성가', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '내게 강 같은 평화 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아주 먼 옛날', artist: '복음성가', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '아주 먼 옛날 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '당신은 사랑받기 위해 태어난 사람', artist: '이율구', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '당신은 사랑받기 위해 태어난 사람 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '그 사랑', artist: '마커스워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '그 사랑 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님 다시 오실 때까지', artist: '소향', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님 다시 오실 때까지 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주님의 은혜 넘치네', artist: '복음성가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주님의 은혜 넘치네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 주를 가까이 하게 함은', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 주를 가까이 하게 함은 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나 같은 죄인 살리신', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나 같은 죄인 살리신 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 안에 있는 나에게', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 안에 있는 나에게 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 평생에 가는 길', artist: '찬송가', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 평생에 가는 길 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '죄짐 맡은 우리 구주', artist: '찬송가', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '죄짐 맡은 우리 구주 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '구주 예수 의지함이', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '구주 예수 의지함이 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '다 찬양하여라', artist: '찬송가', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '다 찬양하여라 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 영혼의 그윽히 깊은 데서', artist: '찬송가', key: 'Ab', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 영혼의 그윽히 깊은 데서 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '오 신실 하신 주', artist: '찬송가', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '오 신실 하신 주 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 더 알기 원하네', artist: '찬송가', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 더 알기 원하네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '이 눈에 아무 증거 아니 뵈어도', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '이 눈에 아무 증거 아니 뵈어도 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '허락하신 새 땅에', artist: '찬송가', key: 'Ab', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '허락하신 새 땅에 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '빛의 사자들이여', artist: '찬송가', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '빛의 사자들이여 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 십자가에 흘린 피로써', artist: '찬송가', key: 'Ab', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '예수 십자가에 흘린 피로써 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 하나님 지으신 모든 세계', artist: '찬송가', key: 'Bb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 하나님 지으신 모든 세계 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 여호와는 광대하시도다', artist: '복음성가', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 여호와는 광대하시도다 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 이름 아시죠', artist: '디사이플스', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 이름 아시죠 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '하나님의 부르심', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하나님의 부르심 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '하나님의 은혜', artist: '피아워십', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '하나님의 은혜 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 하나님 (El Shaddai)', artist: '피아워십', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 하나님 (El Shaddai) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '꽃들도', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '꽃들도 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 영혼이 따뜻한 예배를', artist: '피아워십', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '내 영혼이 따뜻한 예배를 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '사랑하셔서 오시었네', artist: '피아워십', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '사랑하셔서 오시었네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 모든 삶 행동 주 안에', artist: '피아워십', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '내 모든 삶 행동 주 안에 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '나의 약함은 나의 자랑이요', artist: '피아워십', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '나의 약함은 나의 자랑이요 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 음성을 내가 들으니', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주의 음성을 내가 들으니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주께 가까이', artist: '피아워십', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주께 가까이 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '십자가 그 사랑', artist: '피아워십', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '십자가 그 사랑 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 옷자락 만지며', artist: '피아워십', key: 'A', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주의 옷자락 만지며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주의 친절한 팔에 안기세', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주의 친절한 팔에 안기세 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '내 진정 사모하는', artist: '찬송가', key: 'F', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '내 진정 사모하는 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주와 같이 길 가는 것', artist: '찬송가', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주와 같이 길 가는 것 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '아 하나님의 은혜로', artist: '찬송가', key: 'D', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '아 하나님의 은혜로 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '태산을 넘어 험곡에 가도', artist: '찬송가', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '태산을 넘어 험곡에 가도 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '슬픈 마음 있는 사람', artist: '찬송가', key: 'G', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '슬픈 마음 있는 사람 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '만 입이 내게 있으면', artist: '찬송가', key: 'A', bpm: 'fast', mood: 'bright', target: 'adult', themes: ['worship', 'grace'], reason: '만 입이 내게 있으면 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '주 예수보다 더 귀한 것은 없네', artist: '찬송가', key: 'C', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '주 예수보다 더 귀한 것은 없네 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 따라가며', artist: '찬송가', key: 'F', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 따라가며 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '구주와 함께 나 죽었으니', artist: '찬송가', key: 'Eb', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '구주와 함께 나 죽었으니 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '예수 나를 위하여', artist: '찬송가', key: 'G', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '예수 나를 위하여 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '호산나 (Hosanna)', artist: '힐송', key: 'E', bpm: 'medium', mood: 'grand', target: 'adult', themes: ['worship', 'grace'], reason: '호산나 (Hosanna) - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
+  { title: '마지막 날에', artist: '예수전도단', key: 'G', bpm: 'fast', mood: 'bright', target: 'youth', themes: ['worship', 'grace'], reason: '마지막 날에 - 李ъ뼇 ?덈같 怨좊갚?낅땲??' },
 ];
+
+
 
 // ==========================================================================
 // [Firebase 클라우드 실시간 동기화 엔진 설정 및 마이그레이션]
@@ -2788,25 +2738,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (splashScreen && splashVideo) {
-    // 모바일 브라우저 강제 재생 시작 시도
-    splashVideo.play().catch(err => {
-      console.warn("Autoplay was blocked by browser policy. User gesture needed:", err);
-    });
-
-    // 4.5초 뒤 자동 페이드 아웃 강제 해제 (인트로 영상이 3~4초 분량이므로 넉넉히 대기)
-    const splashTimeout = setTimeout(hideSplash, 4500);
-
-    // 비디오 재생이 1.8초보다 일찍 끝나면 즉시 퇴장
-    splashVideo.addEventListener('ended', () => {
-      clearTimeout(splashTimeout);
-      hideSplash();
-    });
-
-    // 스플래시 화면 전체 영역 클릭 시 즉시 건너뛰기
-    splashScreen.addEventListener('click', () => {
-      clearTimeout(splashTimeout);
-      hideSplash();
-    });
+    // [1회성 세션 스플래시 재생 가드] 이번 접속 세션에서 이미 인트로를 보았다면 동영상 재생을 즉시 스킵 처리
+    if (sessionStorage.getItem('splash_shown')) {
+      splashScreen.style.display = 'none';
+    } else {
+      // 최초 1회만 노출 마킹 기록
+      sessionStorage.setItem('splash_shown', 'true');
+      
+      splashVideo.play().catch(err => {
+        console.warn("Autoplay was blocked by browser policy. User gesture needed:", err);
+      });
+  
+      // 4.5초 뒤 자동 페이드 아웃 강제 해제 (인트로 영상이 3~4초 분량이므로 넉넉히 대기)
+      const splashTimeout = setTimeout(hideSplash, 4500);
+  
+      // 비디오 재생이 일찍 끝나면 즉시 퇴장
+      splashVideo.addEventListener('ended', () => {
+        clearTimeout(splashTimeout);
+        hideSplash();
+      });
+  
+      // 스플래시 화면 전체 영역 클릭 시 즉시 건너뛰기
+      splashScreen.addEventListener('click', () => {
+        clearTimeout(splashTimeout);
+        hideSplash();
+      });
+    }
   }
   
   // 1. 데이터베이스 및 세션 확인
@@ -3424,6 +3381,39 @@ const PSALM_VERSES = [
   { verse: "시편 147:1", content: "할렐루야 우리 하나님을 찬양하는 일이 선함이여 찬송하는 일이 아름답고 마땅하도다" }
 ];
 
+// 묵상 탭 날짜 전환 처리기
+function changeDevotionDate(offset) {
+  const church = db.churches[db.activeChurchId];
+  if (!church) return;
+  
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = String(today.getMonth() + 1).padStart(2, '0');
+  const todayDate = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${todayYear}-${todayMonth}-${todayDate}`;
+  
+  if (!state.selectedDevotionDate) {
+    state.selectedDevotionDate = todayStr;
+  }
+  
+  const parts = state.selectedDevotionDate.split('-');
+  const current = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  current.setDate(current.getDate() + offset);
+  
+  const year = current.getFullYear();
+  const month = String(current.getMonth() + 1).padStart(2, '0');
+  const date = String(current.getDate()).padStart(2, '0');
+  const targetStr = `${year}-${month}-${date}`;
+  
+  // 오늘 이후의 미래 날짜로는 넘어갈 수 없음
+  if (targetStr > todayStr) {
+    return;
+  }
+  
+  state.selectedDevotionDate = targetStr;
+  renderDevotionTab();
+}
+
 // 오늘의 말씀 탭 렌더링
 function renderDevotionTab() {
   const church = db.churches[db.activeChurchId];
@@ -3433,42 +3423,73 @@ function renderDevotionTab() {
   if (!church.devotions) church.devotions = {};
   
   const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const date = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${year}-${month}-${date}`;
+  const todayYear = today.getFullYear();
+  const todayMonth = String(today.getMonth() + 1).padStart(2, '0');
+  const todayDate = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${todayYear}-${todayMonth}-${todayDate}`;
   
-  if (!church.devotions[todayStr]) {
-    church.devotions[todayStr] = { posts: [] };
+  if (!state.selectedDevotionDate) {
+    state.selectedDevotionDate = todayStr;
   }
   
-  // 1. 오늘의 시편 말씀 출력
-  const verseIndex = today.getDate() % PSALM_VERSES.length;
+  const targetDateStr = state.selectedDevotionDate;
+  const isToday = targetDateStr === todayStr;
+  
+  if (!church.devotions[targetDateStr]) {
+    church.devotions[targetDateStr] = { posts: [] };
+  }
+  
+  // 1. 날짜 디스플레이 제어
+  const nextBtn = document.getElementById('btn-devotion-next');
+  if (nextBtn) {
+    nextBtn.style.visibility = isToday ? 'hidden' : 'visible';
+  }
+  
+  const parts = targetDateStr.split('-');
+  const dateText = `${parts[0]}년 ${parts[1]}월 ${parts[2]}일` + (isToday ? ' (오늘)' : '');
+  const dateDisplay = document.getElementById('devotion-current-date-display');
+  if (dateDisplay) {
+    dateDisplay.innerHTML = `<i class="fa-regular fa-calendar"></i> ${dateText}`;
+  }
+  
+  // 2. 오늘의 시편 말씀 출력 (해당 타겟 날짜의 getDate 기준 매칭)
+  const targetDayVal = parseInt(parts[2], 10);
+  const verseIndex = targetDayVal % PSALM_VERSES.length;
   const todayVerse = PSALM_VERSES[verseIndex];
   
   document.getElementById('daily-verse-title').textContent = todayVerse.verse;
   document.getElementById('daily-verse-content').textContent = `“${todayVerse.content}”`;
   
-  // 2. 본인의 묵상 참여 양식 제어 (이미 썼다면 작성창 숨김)
-  const posts = church.devotions[todayStr].posts || [];
-  const hasWritten = posts.some(post => post.authorName === state.userName);
-  
+  // 3. 본인의 묵상 참여 양식 제어
+  const posts = church.devotions[targetDateStr].posts || [];
   const formBox = document.getElementById('my-devotion-form-box');
   const completeMsg = document.getElementById('my-devotion-complete-msg');
+  const pastMsg = document.getElementById('my-devotion-past-msg');
   
-  if (hasWritten) {
+  if (!isToday) {
     formBox.style.display = 'none';
-    completeMsg.style.display = 'block';
-  } else {
-    formBox.style.display = 'block';
     completeMsg.style.display = 'none';
-    document.getElementById('devotion-post-input').value = '';
+    if (pastMsg) {
+      pastMsg.style.display = 'block';
+      pastMsg.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> ${parts[1]}월 ${parts[2]}일의 찬양팀 묵상 나눔 피드 및 출석 내역입니다.`;
+    }
+  } else {
+    if (pastMsg) pastMsg.style.display = 'none';
+    const hasWritten = posts.some(post => post.authorName === state.userName);
+    if (hasWritten) {
+      formBox.style.display = 'none';
+      completeMsg.style.display = 'block';
+    } else {
+      formBox.style.display = 'block';
+      completeMsg.style.display = 'none';
+      document.getElementById('devotion-post-input').value = '';
+    }
   }
   
-  // 3. 관리자 전용 실시간 출석 현황판 노출
+  // 4. 관리자 전용 실시간 출석 현황판 노출 (해당 날짜 기준)
   const adminBox = document.getElementById('admin-attendance-box');
   const listContainer = document.getElementById('attendance-list-container');
-  const todayAttendance = church.attendances[todayStr] || {};
+  const todayAttendance = church.attendances[targetDateStr] || {};
   
   if (db.activeRole === 'admin') {
     adminBox.style.display = 'block';
@@ -3478,7 +3499,7 @@ function renderDevotionTab() {
     document.getElementById('attendance-count-badge').textContent = `${attendPeople.length}명`;
     
     if (attendPeople.length === 0) {
-      listContainer.innerHTML = `<span style="font-size: 0.72rem; color: var(--text-muted); font-style: italic;">오늘 아직 출석체크를 완료한 팀원이 없습니다.</span>`;
+      listContainer.innerHTML = `<span style="font-size: 0.72rem; color: var(--text-muted); font-style: italic;">선택한 날짜에 출석체크를 완료한 팀원이 없습니다.</span>`;
     } else {
       attendPeople.forEach(name => {
         const time = todayAttendance[name];
@@ -3503,7 +3524,7 @@ function renderDevotionTab() {
     adminBox.style.display = 'none';
   }
   
-  // 4. 실시간 묵상 피드 & 댓글 게시판 출력
+  // 5. 실시간 묵상 피드 출력
   const feedContainer = document.getElementById('devotion-feed-container');
   feedContainer.innerHTML = '';
   
@@ -3511,14 +3532,12 @@ function renderDevotionTab() {
     feedContainer.innerHTML = `
       <div class="empty-state" style="padding: 24px 10px; background: rgba(255,255,255,0.7); border: 1px dashed var(--border); border-radius: var(--radius-md);">
         <i class="fa-regular fa-comments empty-icon" style="color: #a5b4fc; font-size: 1.8rem; margin-bottom: 6px;"></i>
-        <p style="font-size: 0.8125rem; font-weight: 700; color: var(--text-sub);">오늘 나눈 묵상이 아직 없습니다.</p>
-        <p class="empty-sub" style="font-size: 0.72rem;">첫 묵상글을 등록하여 찬양팀원들과 은혜를 나누어 보세요!</p>
+        <p style="font-size: 0.8125rem; font-weight: 700; color: var(--text-sub);">선택한 날짜에 등록된 묵상이 없습니다.</p>
       </div>
     `;
     return;
   }
   
-  // 최신 글이 위로 오도록 정렬
   const reversedPosts = [...posts].reverse();
   
   reversedPosts.forEach(post => {
@@ -3535,7 +3554,6 @@ function renderDevotionTab() {
       gap: 10px;
     `;
     
-    // 출석 완료 뱃지는 오직 관리자만 볼 수 있도록 제어
     const attendanceBadgeHtml = db.activeRole === 'admin'
       ? `<span style="font-size: 0.65rem; background: #10b981; color: #fff; padding: 1px 5px; border-radius: 8px; font-weight: 700;">출석완료</span>`
       : '';
@@ -3558,7 +3576,7 @@ function renderDevotionTab() {
   });
 }
 
-// 묵상글 신규 등록 (동시 출석 완료 처리)
+// 묵상글 신규 등록 (출석 자동 완료 연동)
 function saveDevotionPost() {
   const church = db.churches[db.activeChurchId];
   if (!church) return;
@@ -3600,6 +3618,9 @@ function saveDevotionPost() {
   if (!church.attendances[todayStr]) church.attendances[todayStr] = {};
   
   church.attendances[todayStr][state.userName] = timeStr;
+  
+  // 묵상 등록 시 날짜 선택기를 오늘로 자동 리셋
+  state.selectedDevotionDate = todayStr;
   
   saveDatabase();
   
