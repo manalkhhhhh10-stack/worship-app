@@ -931,13 +931,6 @@ function setSessionAndEnter(churchId, role) {
   // 메인 진입 시 탭 초기화(공지사항) 및 렌더링
   switchMainTab('notice');
   navigateTo('main');
-  try {
-    history.replaceState({
-      screenId: 'main',
-      serviceId: null,
-      weekId: null
-    }, "", "");
-  } catch (e) {}
 }
 
 // 로그아웃
@@ -2243,7 +2236,7 @@ function navigateTo(screenId, serviceId = null, weekId = null, isFromPopState = 
     screenDetail.classList.add('active');
   }
   
-  if (!isFromPopState && screenId !== "auth") {
+  if (!isFromPopState) {
     try {
       history.pushState({
         screenId: screenId,
@@ -2880,18 +2873,73 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {}
   
   window.addEventListener("popstate", (event) => {
-    if (event.state && event.state.screenId) {
+    if (event.state) {
       var sState = event.state;
-      if (sState.screenId === "auth") {
-        navigateTo("main", null, null, true);
-      } else {
-        navigateTo(sState.screenId, sState.serviceId, sState.weekId, true);
-      }
-    } else {
-      navigateTo("main", null, null, true);
+      navigateTo(sState.screenId, sState.serviceId, sState.weekId, true);
     }
   });
-});
+  
+  // 2. 인증 화면 실시간 검색 바인딩
+  document.getElementById('auth-search-input').addEventListener('input', searchChurches);
+  
+  // 3. 인증 화면 내 로그인 액션 바인딩
+  document.getElementById('btn-login-member').addEventListener('click', loginAsMember);
+  document.getElementById('btn-login-admin').addEventListener('click', loginAsAdmin);
+  
+  // 4. 새 교회 등록 폼 제출 바인딩
+  document.getElementById('auth-register-form').addEventListener('submit', registerChurch);
+  
+  // 5. 탭 전환 바인딩
+  document.getElementById('tab-find-church').addEventListener('click', () => switchAuthTab('find'));
+  document.getElementById('tab-new-church').addEventListener('click', () => switchAuthTab('new'));
+  
+  // 6. 로그아웃 버튼 바인딩
+  document.getElementById('btn-logout').addEventListener('click', logout);
+  
+  // 6.2 오늘의 말씀 묵상 나누기 등록 버튼 바인딩
+  document.getElementById('btn-submit-devotion-post').addEventListener('click', saveDevotionPost);
+  
+  // 6.5 메인 대시보드 하단 탭 전환 버튼 바인딩
+  document.getElementById('btn-tab-conti').addEventListener('click', () => switchMainTab('conti'));
+  document.getElementById('btn-tab-notice').addEventListener('click', () => switchMainTab('notice'));
+  document.getElementById('btn-tab-devotion').addEventListener('click', () => switchMainTab('devotion'));
+  document.getElementById('btn-tab-ai').addEventListener('click', () => switchMainTab('ai-rec'));
+  
+  // 7. 메인화면 찬양팀 이름 수정 버튼 바인딩
+  document.getElementById('btn-edit-team-name').addEventListener('click', () => {
+    if (db.activeRole === 'admin') {
+      toggleTeamModal(true);
+    }
+  });
+  
+  // 8. 메인화면: 예배 추가 플로팅 버튼 바인딩
+  document.getElementById('btn-add-worship').addEventListener('click', () => {
+    openAddWorshipModal();
+  });
+  
+  // 8.5 메인화면: 공지사항 추가 플로팅 버튼 바인딩
+  document.getElementById('btn-add-notice').addEventListener('click', () => {
+    openAddNoticeModal();
+  });
+  
+  // 9. 예배 추가/수정 모달 제어 바인딩
+  document.getElementById('btn-close-worship-modal').addEventListener('click', () => toggleWorshipModal(false));
+  document.getElementById('btn-cancel-worship-modal').addEventListener('click', () => toggleWorshipModal(false));
+  document.getElementById('worship-modal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('worship-modal')) {
+      toggleWorshipModal(false);
+    }
+  });
+  document.getElementById('worship-form').addEventListener('submit', saveWorshipService);
+  
+  // 10. 서브 화면 주차 카드 클릭 시 상세 콘티 이동
+  const weekCards = document.querySelectorAll('.week-card[data-week-id]');
+  weekCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const weekId = card.getAttribute('data-week-id');
+      navigateTo('detail', state.selectedServiceId, weekId);
+    });
+  });
   
   // 이전 콘티 카드 클릭 시 아카이브 목록 화면으로 이동 바인딩
   document.getElementById('btn-past-weeks').addEventListener('click', () => {
