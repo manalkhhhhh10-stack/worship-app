@@ -1,4 +1,4 @@
-// 앱 상태 관리 객체 (세션과 분리된 임시 화면 상태)
+﻿// 앱 상태 관리 객체 (세션과 분리된 임시 화면 상태)
 const state = {
   currentScreen: 'auth',       // 'auth', 'main', 'sub', 'history', 'detail'
   currentTab: 'notice',        // 메인 화면 내 활성화된 탭 ('notice' | 'devotion' | 'conti' | 'ai-rec')
@@ -3651,50 +3651,30 @@ function showToast(message) {
 
 // 앱 내부 유튜브 플레이어 모달 제어 함수
 function openYoutubePlayer(title, youtubeUrlOrSearchTitle) {
-  const modal = document.getElementById('youtube-player-modal');
-  const titleEl = document.getElementById('youtube-player-title');
-  const iframe = document.getElementById('youtube-iframe');
-  if (!modal || !iframe || !titleEl) return;
-  
-  // 유튜브 영상이 존재하지 않거나 빈 스트링인 경우 처리
   if (!youtubeUrlOrSearchTitle || youtubeUrlOrSearchTitle.trim() === "") {
-    alert('등록된 영상이 없습니다.');
-    return;
-  }
-
-  titleEl.textContent = title;
-  let embedUrl = "";
-  
-  // 1. 유효한 유튜브 재생 URL인 경우 비디오 ID 파싱 시도
-  if (youtubeUrlOrSearchTitle.includes('youtube.com') || youtubeUrlOrSearchTitle.includes('youtu.be')) {
-    let videoId = "";
-    try {
-      if (youtubeUrlOrSearchTitle.includes('youtu.be/')) {
-        videoId = youtubeUrlOrSearchTitle.split('youtu.be/')[1].split('?')[0].split('&')[0];
-      } else if (youtubeUrlOrSearchTitle.includes('v=')) {
-        videoId = youtubeUrlOrSearchTitle.split('v=')[1].split('&')[0];
-      } else if (youtubeUrlOrSearchTitle.includes('embed/')) {
-        videoId = youtubeUrlOrSearchTitle.split('embed/')[1].split('?')[0].split('&')[0];
-      }
-    } catch (e) {
-      console.error("유튜브 ID 추출 실패:", e);
-    }
-    
-    if (videoId) {
-      embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-    }
-  }
-  
-  // 2. 유튜브 URL이 아니거나 ID 추출 실패(단순 검색어) 시, 구글 보안 정책(X-Frame-Options) 우회를 위해 새 탭으로 즉각 오픈!
-  if (!embedUrl) {
-    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(youtubeUrlOrSearchTitle)}`;
-    window.open(searchUrl, '_blank');
-    showToast("유튜브 검색창을 새 탭으로 연결했습니다.");
+    alert("?깅줉???곸긽 ?뺣낫媛 ?놁뒿?덈떎.");
     return;
   }
   
-  iframe.src = embedUrl;
-  modal.classList.add('active');
+  var targetUrl = "";
+  if (youtubeUrlOrSearchTitle.indexOf("youtube.com") > -1 || youtubeUrlOrSearchTitle.indexOf("youtu.be") > -1) {
+    targetUrl = youtubeUrlOrSearchTitle;
+  } else {
+    targetUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(youtubeUrlOrSearchTitle);
+  }
+  
+  try {
+    var a = document.createElement("a");
+    a.href = targetUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast("?좏뒠釉뚮줈 ?덉쟾?섍쾶 ?곌껐?덉뒿?덈떎.");
+  } catch (err) {
+    window.location.href = targetUrl;
+  }
 }
 
 function closeYoutubePlayer() {
