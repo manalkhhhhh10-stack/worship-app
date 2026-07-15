@@ -1,4 +1,4 @@
-﻿// 앱 상태 관리 객체 (세션과 분리된 임시 화면 상태)
+// 앱 상태 관리 객체 (세션과 분리된 임시 화면 상태)
 const state = {
   currentScreen: 'auth',       // 'auth', 'main', 'sub', 'history', 'detail'
   currentTab: 'notice',        // 메인 화면 내 활성화된 탭 ('notice' | 'devotion' | 'conti' | 'ai-rec')
@@ -519,6 +519,10 @@ async function initDatabase() {
         const weeks = worship.weeks || {};
         for (const weekId in weeks) {
           const week = weeks[weekId];
+          if (!week.items) {
+            week.items = [];
+            needsSave = true;
+          }
           if (week.items) {
             week.items.forEach(song => {
               if (song.key === undefined) {
@@ -2614,6 +2618,7 @@ function saveSong(event) {
   }
   const week = worship.weeks[state.selectedWeekId];
   if (!week) return;
+  if (!week.items) week.items = []; // items 필드 누락 자가 치유 가드 장착!
   
   if (state.editingSongId) {
     // 수정
